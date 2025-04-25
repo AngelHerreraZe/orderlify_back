@@ -12,7 +12,6 @@ module.exports = {
       tableNumber: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        autoIncrement: true
       },
       capacity: {
         type: Sequelize.INTEGER,

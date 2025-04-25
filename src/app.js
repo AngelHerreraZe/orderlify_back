@@ -4,11 +4,9 @@ const helmet = require('helmet');
 const hpp = require('hpp');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const xss = require('xss-clean');
+const sanitize = require('./middlewares/sanitize.middleware');
 const ApiRoutes = require('./routes');
 const errorHandlerRouter = require('./routes/error.handler.routes');
-//const swaggerUi = require("swagger-ui-express");
-// const swaggerDoc = require("./swagger.json");
 
 const app = express();
 
@@ -23,14 +21,13 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 
-// app.use("/api/v1/docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 app.use(helmet());
 app.use(express.json());
 app.use(cors());
-app.use(xss());
+app.use(sanitize);
 app.use(hpp());
 
-app.use('/api/v1', limiter);
+app.use('/api/v1/', limiter);
 
 
 ApiRoutes(app);
