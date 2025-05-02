@@ -1,17 +1,56 @@
 const catchAsync = require('../utils/catchAsync');
 const userServices = require('../services/users.services');
-
+const AuthServices = require('../services/auth.serrvices');
+const bcrypt = require('bcrypt');
 
 exports.create = catchAsync(async (req, res, next) => {
-    const { username,  password, name, lastname } = req.body;
-    const user = await userServices.create({
-        username,
-        password,
-        name,
-        lastname
-    });
-    return res.status(201).json({
-        status: 'success',
-        message: 'User created successfully',
+  const { username, password, name, lastname } = req.body;
+  const user = await userServices.create({
+    username,
+    password,
+    name,
+    lastname,
+  });
+  return res.status(201).json({
+    status: 'success',
+    message: 'User created successfully',
+  });
+});
+
+exports.getUsersInformations = catchAsync(async (req, res, next) => {
+  try {
+    const usersInfo = await userServices.getUsersInfo();
+    return res.json(usersInfo);
+  } catch (error) {
+    throw error;
+  }
+});
+
+exports.userLogin = catchAsync(async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    const user = await userServices.getUser(username);
+    if (!user) {
+      next({
+        status: 400,
+        message: 'Invalid username',
+        errorName: 'User not found',
       });
-})
+    } else {
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) {
+        next({
+          status: 400,
+          message: "The password doesn't match with username",
+          errorName: 'Invalid password',
+        });
+      } else {
+        const { id, username } = user;
+        const token = AuthServices.genToken({ id, username });
+        res.json({ token });
+      }
+    }
+  } catch (error) {
+    throw error;
+  }
+});
