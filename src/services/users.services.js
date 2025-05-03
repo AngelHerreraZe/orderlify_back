@@ -32,6 +32,47 @@ class UserServices {
       throw error;
     }
   }
+
+  static async getUserInfoById(id) {
+    try {
+      const user = await db.User.findOne({
+        where: { id },
+        attributes: {
+          exclude: ['password', 'active', 'createdAt', 'updatedAt'],
+        },
+      });
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async updateUserInfo(id, name, lastname, active) {
+    try {
+      await db.User.update(
+        { name, lastname, active },
+        {
+          where: {
+            id,
+          },
+        }
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async deleteUser(id) {
+    try {
+      await db.User.destroy({
+        where: {
+          id,
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = UserServices;

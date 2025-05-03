@@ -54,3 +54,36 @@ exports.userLogin = catchAsync(async (req, res, next) => {
     throw error;
   }
 });
+
+exports.getUserbyId = catchAsync(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await userServices.getUserInfoById(id);
+    res.json({ user });
+  } catch (error) {
+    throw error;
+  }
+});
+
+exports.updateUserInfo = catchAsync(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, lastname, active } = req.body;
+    console.log(id, name, lastname, active);
+
+    await userServices.updateUserInfo(id, name, lastname, active);
+    return res.sendStatus(204);
+  } catch (error) {
+    throw error;
+  }
+});
+
+exports.deleteUser = catchAsync(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await userServices.deleteUser(id);
+    return res.sendStatus(204);
+  } catch (error) {
+    throw error;
+  }
+});
