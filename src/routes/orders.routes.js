@@ -14,4 +14,11 @@ router
   .put(ordersController.updateOrder)
   .delete(ordersController.deleteOrder);
 
+router.post('/orders/:orderId/items', ordersController.addItemsToOrder);
+
+router
+  .route('/orders/:orderId/items/:productId')
+  .put(ordersController.editOrderItems)
+  .delete(ordersController.deleteOrderItem)
+
 module.exports = router;

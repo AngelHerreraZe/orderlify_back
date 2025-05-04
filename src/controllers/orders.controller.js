@@ -23,7 +23,7 @@ exports.getOrders = catchAsync(async (req, res, next) => {
 exports.getOrderById = catchAsync(async (req, res, next) => {
   try {
     const { id } = req.params;
-    const order = await   ordersServices.getOrderById(id);
+    const order = await ordersServices.getOrderById(id);
     return res.json({ order });
   } catch (error) {
     throw error;
@@ -46,6 +46,43 @@ exports.deleteOrder = catchAsync(async (req, res, next) => {
     const { id } = req.params;
     await ordersServices.deleteOrder(id);
     return res.sendStatus(204);
+  } catch (error) {
+    throw error;
+  }
+});
+
+exports.addItemsToOrder = catchAsync(async (req, res, next) => {
+  try {
+    const items = req.body;
+    const orderId = req.params.orderId;
+    const itemsArray = Object.values(items).map((item) => ({
+      ...item,
+      orderId: parseInt(orderId),
+    }));
+    console.log(itemsArray);
+    await ordersServices.addItemsToOrder(itemsArray);
+    return res.sendStatus(200);
+  } catch (error) {
+    throw error;
+  }
+});
+
+exports.editOrderItems = catchAsync(async (req, res, next) => {
+  try {
+    const { orderId, productId } = req.params;
+    const { quantity, price } = req.body;
+    await ordersServices.editOrderItems(orderId, productId, quantity, price);
+    return res.sendStatus(204);
+  } catch (error) {
+    throw error;
+  }
+});
+
+exports.deleteOrderItem = catchAsync(async (req, res, next) => {
+  try {
+    const { orderId, productId } = req.params;
+    await ordersServices.deleteOrderItem(orderId, productId);
+    return res.sendStatus(204)
   } catch (error) {
     throw error;
   }

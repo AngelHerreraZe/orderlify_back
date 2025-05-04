@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const db = require('../database/models/index');
 
 class ordersServices {
@@ -16,7 +17,9 @@ class ordersServices {
 
   static async getOrders() {
     try {
-      const orders = await db.Orders.findAll();
+      const orders = await db.Orders.findAll({
+        include: { model: db.OrdersItems },
+      });
       return orders;
     } catch (error) {
       throw error;
@@ -29,6 +32,7 @@ class ordersServices {
         where: {
           id,
         },
+        include: { model: db.OrdersItems },
       });
       return order;
     } catch (error) {
@@ -56,6 +60,42 @@ class ordersServices {
     try {
       await db.Orders.destroy({
         where: { id },
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async addItemsToOrder(itemsArray) {
+    try {
+      await db.OrdersItems.bulkCreate(itemsArray);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async editOrderItems(orderId, productId, quantity, price) {
+    try {
+      await db.OrdersItems.update(
+        {
+          quantity,
+          price,
+        },
+        {
+          where: {
+            [Op.and]: [{ productId }, { orderId }],
+          },
+        }
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async deleteOrderItem(orderId, productId) {
+    try {
+      await db.OrdersItems.destroy({
+        where: { [Op.and]: [{ orderId, productId }] },
       });
     } catch (error) {
       throw error;
