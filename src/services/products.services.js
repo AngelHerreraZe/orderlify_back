@@ -15,14 +15,7 @@ class productsServices {
         attributes: {
           exclude: ['createdAt', 'updatedAt'],
         },
-        include: [
-          {
-            model: db.Categories,
-            attributes: {
-              exclude: ['updatedAt', 'createdAt'],
-            },
-          },
-        ],
+        include: [{ all: true }],
         order: [['id', 'ASC']],
       });
       return products;
@@ -35,14 +28,7 @@ class productsServices {
     try {
       const product = await db.Products.findOne({
         where: { id },
-        include: [
-          {
-            model: db.Categories,
-            attributes: {
-              exclude: ['createdAt', 'updatedAt'],
-            },
-          },
-        ],
+        include: [{ all: true }],
         attributes: {
           exclude: ['createdAt', 'updatedAt'],
         },
@@ -97,6 +83,7 @@ class productsServices {
         attributes: {
           exclude: ['createdAt', 'updatedAt'],
         },
+        include: [{ all: true }],
       });
       return categories;
     } catch (error) {
@@ -104,13 +91,13 @@ class productsServices {
     }
   }
 
-  static async createCategory(name){
+  static async createCategory(name) {
     try {
-        await db.Categories.create({
-            name
-        })
+      await db.Categories.create({
+        name,
+      });
     } catch (error) {
-        throw error;
+      throw error;
     }
   }
 }

@@ -17,6 +17,7 @@ class RolesServices {
         attributes: {
           exclude: ['createdAt', 'updatedAt'],
         },
+        include: [{ all: true }],
       });
       return roles;
     } catch (error) {

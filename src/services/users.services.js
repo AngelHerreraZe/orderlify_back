@@ -15,6 +15,7 @@ class UserServices {
         attributes: {
           exclude: ['password', 'active', 'createdAt', 'updatedAt'],
         },
+        include: [{ all: true }],
       });
       return users;
     } catch (error) {
@@ -26,6 +27,7 @@ class UserServices {
     try {
       const user = await db.User.findOne({
         where: { username: username },
+        include: [{ all: true }],
       });
       return user;
     } catch (error) {
@@ -40,6 +42,7 @@ class UserServices {
         attributes: {
           exclude: ['password', 'active', 'createdAt', 'updatedAt'],
         },
+        include: [{ all: true }],
       });
       return user;
     } catch (error) {
