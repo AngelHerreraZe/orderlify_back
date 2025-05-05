@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       type: DataTypes.INTEGER
     },
-    oderId: {
+    orderId: {
       type: DataTypes.INTEGER,
       field: 'order_id',
       allowNull: false,
