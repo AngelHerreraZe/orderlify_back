@@ -10,3 +10,22 @@ exports.registerPayment = catchAsync(async (req, res, next) => {
     throw error;
   }
 });
+
+exports.getAllPayments = catchAsync(async (req, res, next) => {
+  try {
+    const payments = await paymentsServices.getAllPayments();
+    return res.json({ payments });
+  } catch (error) {
+    throw error;
+  }
+});
+
+exports.getOnePayment = catchAsync(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const payment = await paymentsServices.getOnePayment(id);
+    return res.json({ payment });
+  } catch (error) {
+    throw error;
+  }
+});

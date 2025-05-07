@@ -14,6 +14,26 @@ class paymentsServices {
       throw error;
     }
   }
+
+  static async getAllPayments() {
+    try {
+      const payments = db.Payments.findAll();
+      return payments;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getOnePayment(id) {
+    try {
+      const payment = db.Payments.findOne({
+        where: { id },
+      });
+      return payment
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = paymentsServices;
