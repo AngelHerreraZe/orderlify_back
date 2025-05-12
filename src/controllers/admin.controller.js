@@ -10,6 +10,15 @@ exports.getOverView = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.getWeeklyOverView = catchAsync(async (req, res, next) => {
+  try {
+    const weeklyOverview = await adminServices.getWeeklyOverView();
+    return res.json({ weeklyOverview });
+  } catch (error) {
+    throw error;
+  }
+});
+
 exports.getReports = catchAsync(async (req, res, next) => {
   try {
     const { startDate, endDate } = req.body;
