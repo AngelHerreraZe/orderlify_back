@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
     tableNumber: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'table_number'
     },
     capacity: {
       type: DataTypes.INTEGER,

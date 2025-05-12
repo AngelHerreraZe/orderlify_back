@@ -18,7 +18,7 @@ class ordersServices {
   static async getOrders() {
     try {
       const orders = await db.Orders.findAll({
-        include: { model: db.OrdersItems },
+        include: { model: db.OrdersItems, include: { model: db.Products } },
       });
       return orders;
     } catch (error) {
