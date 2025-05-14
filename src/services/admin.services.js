@@ -1,5 +1,7 @@
 const db = require('../database/models/index');
 const { where, fn, col, Op, Sequelize } = require('sequelize');
+const ExcelJS = require('exceljs');
+const path = require('path');
 
 class adminServices {
   static async dailyOvewview() {
@@ -309,9 +311,42 @@ class adminServices {
         productByCategory,
         topWaiters,
       };
-      return finalResponse;
+      return totalSales;
     } catch (error) {
       throw error;
+    }
+  }
+
+  static async genExcel(startDate, endDate) {
+    try {
+      const orders = await db.Orders.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [new Date(startDate), new Date(endDate)],
+          },
+        },
+        include: [
+          {
+            model: db.OrdersItems,
+            include: [
+              {
+                model: db.Products,
+                include: [{ model: db.Categories }],
+              },
+            ],
+          },
+          {
+            model: db.User,
+            attributes: {
+              exclude: ['password', 'active', 'createdAt', 'updatedAt'],
+            },
+          },
+        ],
+      });
+
+      return orders;
+    } catch (error) {
+      throw new Error('Error al obtener las órdenes: ' + error.message);
     }
   }
 }

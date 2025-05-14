@@ -46,7 +46,8 @@ exports.userLogin = catchAsync(async (req, res, next) => {
         });
       } else {
         const { id, username } = user;
-        const token = AuthServices.genToken({ id, username });
+        const role = user.UsersRoles[0].Role.name;
+        const token = AuthServices.genToken({ id, username, role });
         res.json({ token });
       }
     }

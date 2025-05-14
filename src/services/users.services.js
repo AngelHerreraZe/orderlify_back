@@ -27,7 +27,7 @@ class UserServices {
     try {
       const user = await db.User.findOne({
         where: { username: username },
-        include: [{ all: true }],
+        include: [{ model: db.UsersRoles, include: [{ model: db.Roles }] }],
       });
       return user;
     } catch (error) {
