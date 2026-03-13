@@ -11,27 +11,32 @@ const errorHandlerRouter = require('./routes/error.handler.routes');
 const app = express();
 
 const limiter = rateLimit({
-  max: 100000,
+  max: 200,
   windowMs: 60 * 60 * 1000,
-  message: 'Too many request from this IP, please try again in one hour!',
+  message: 'Too many requests from this IP, please try again in one hour!',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-
 app.use(helmet());
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'auth-token'],
+  })
+);
 app.use(sanitize);
 app.use(hpp());
 
 app.use('/api/v1/', limiter);
 
-
 ApiRoutes(app);
-
 errorHandlerRouter(app);
 
 module.exports = app;

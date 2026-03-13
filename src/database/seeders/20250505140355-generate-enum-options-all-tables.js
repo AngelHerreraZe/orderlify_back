@@ -38,22 +38,22 @@ module.exports = {
     ]);
     await Roles.bulkCreate([
       {
-        name: 'Mesero',
+        name: 'Waiter',
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
-        name: 'Cocinero',
+        name: 'Chef',
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
-        name: 'Cajero',
+        name: 'Cashier',
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
-        name: 'Gerente',
+        name: 'Manager',
         createdAt: new Date(),
         updatedAt: new Date(),
       },

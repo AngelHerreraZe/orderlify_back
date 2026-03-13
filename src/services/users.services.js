@@ -15,7 +15,7 @@ class UserServices {
         attributes: {
           exclude: ['password', 'active', 'createdAt', 'updatedAt'],
         },
-        include: [{ all: true }],
+        include: [{ model: db.UsersRoles, include: [{ model: db.Roles }] }],
       });
       return users;
     } catch (error) {
@@ -42,7 +42,7 @@ class UserServices {
         attributes: {
           exclude: ['password', 'active', 'createdAt', 'updatedAt'],
         },
-        include: [{ all: true }],
+        include: [{ model: db.UsersRoles, include: [{ model: db.Roles }] }],
       });
       return user;
     } catch (error) {
@@ -50,10 +50,10 @@ class UserServices {
     }
   }
 
-  static async updateUserInfo(id, name, lastname, active) {
+  static async updateUserInfo(id, name, lastname, active, password) {
     try {
       await db.User.update(
-        { name, lastname, active },
+        { name, lastname, active, password },
         {
           where: {
             id,

@@ -1,38 +1,19 @@
 const db = require('../database/models/index');
 
 class paymentsServices {
-  static async registerPayment(orderId, ammount, method) {
-    try {
-      const paidAt = Date.now();
-      await db.Payments.create({
-        orderId,
-        ammount,
-        method,
-        paidAt,
-      });
-    } catch (error) {
-      throw error;
-    }
+  static async registerPayment(orderId, amount, method) {
+    const paidAt = new Date();
+    await db.Payments.create({ orderId, amount, method, paidAt });
   }
 
   static async getAllPayments() {
-    try {
-      const payments = db.Payments.findAll();
-      return payments;
-    } catch (error) {
-      throw error;
-    }
+    const payments = await db.Payments.findAll();
+    return payments;
   }
 
   static async getOnePayment(id) {
-    try {
-      const payment = db.Payments.findOne({
-        where: { id },
-      });
-      return payment
-    } catch (error) {
-      throw error;
-    }
+    const payment = await db.Payments.findOne({ where: { id } });
+    return payment;
   }
 }
 
