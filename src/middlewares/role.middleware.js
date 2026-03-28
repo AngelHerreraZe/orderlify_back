@@ -38,23 +38,10 @@ const isManager = async (req, res, next) => {
   next();
 };
 
-const allowRoles = (...roles) => {
-  return (req, res, next) => {
-    const { username, role } = req.user;
-    if (!roles.includes(role)) {
-      return res.status(403).json({
-        message: `${username} does not have the required role. Required: ${roles.join(' or ')}`,
-      });
-    }
-    next();
-  };
-};
-
 module.exports = {
   isAdmin,
   isWaiter,
   isChef,
   isCashier,
   isManager,
-  allowRoles
 };
