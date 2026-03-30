@@ -3,7 +3,7 @@ const AppError = require('../utils/appError');
 require('dotenv').config();
 
 const authenticate = (req, res, next) => {
-  const token = req.headers['clonstagram-token'];
+  const token = req.headers['auth-token'];
   if (!token) {
     return next(new AppError('No token provided', 401));
   }
