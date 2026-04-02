@@ -7,6 +7,7 @@ module.exports = {
     const user = await User.create({
       username: 'admin',
       password: 'admin1234',
+      passwordChanged: true,
       name: 'admin',
       lastname: 'admin',
       createdAt: new Date(),

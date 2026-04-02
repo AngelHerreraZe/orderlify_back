@@ -4,13 +4,14 @@ const userController = require('../controllers/users.controller');
 const authenticate = require('../middlewares/auth.middleware');
 const { allowRoles } = require('../middlewares/role.middleware');
 
+
 const router = Router();
 
 router.get(
   '/users',
   authenticate,
   allowRoles('Admin', 'Manager'),
-  userController.getUsersInformations
+  userController.getUsersInformations,
 );
 
 router.post('/auth/login', userController.userLogin);
@@ -20,7 +21,7 @@ router.post(
   createUserValidator,
   authenticate,
   allowRoles('Admin', 'Manager'),
-  userController.create
+  userController.create,
 );
 
 router
@@ -29,12 +30,18 @@ router
   .put(
     authenticate,
     allowRoles('Admin', 'Manager'),
-    userController.updateUserInfo
+    userController.updateUserInfo,
   )
   .delete(
     authenticate,
     allowRoles('Admin', 'Manager'),
-    userController.deleteUser
+    userController.deleteUser,
   );
+
+router.patch(
+  '/auth/change-password',
+  authenticate,
+  userController.changePassword,
+);
 
 module.exports = router;

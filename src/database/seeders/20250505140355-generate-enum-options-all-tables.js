@@ -61,8 +61,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    const { Categories, Roles } = require('../models');
-    await Categories.bulkDelete({ where: {} });
-    await Roles.bulkDelete({ where: {} });
+    await queryInterface.bulkDelete('categories', null, {});
+    await queryInterface.bulkDelete('roles', null, {});
   },
 };

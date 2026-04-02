@@ -58,7 +58,7 @@ class UserServices {
           where: {
             id,
           },
-        }
+        },
       );
     } catch (error) {
       throw error;
@@ -72,6 +72,25 @@ class UserServices {
           id,
         },
       });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getUserRawById(id) {
+    try {
+      return await db.User.findOne({ where: { id } });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async updatePassword(id, hashedPassword) {
+    try {
+      await db.User.update(
+        { password: hashedPassword, passwordChanged: true },
+        { where: { id } },
+      );
     } catch (error) {
       throw error;
     }

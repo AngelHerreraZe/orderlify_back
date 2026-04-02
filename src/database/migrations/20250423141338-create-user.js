@@ -7,40 +7,46 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       username: {
         allowNull: false,
         unique: true,
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
       },
       password: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+      },
+      passwordChanged: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+        field: "password_changed"
       },
       name: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
       lastname: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
       active: {
         type: Sequelize.BOOLEAN,
-        defaultValue: true
+        defaultValue: true,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('user');
-  }
+  },
 };
