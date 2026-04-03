@@ -29,7 +29,8 @@ exports.userLogin = catchAsync(async (req, res, next) => {
     return next(new AppError("The password doesn't match with username", 400));
   }
   const { id, passwordChanged } = user;
-  const role = user.UsersRoles[0].Role.name;
+  console.log(user.UsersRoles[0]);
+  const role = user.UsersRoles[0]?.Role.name;
   const token = AuthServices.genToken({ id, username, role, passwordChanged });
   return res.json({ token, mustChangePassword: !passwordChanged });
 });
