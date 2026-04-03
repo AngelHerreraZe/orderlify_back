@@ -6,10 +6,16 @@ const bcrypt = require('bcrypt');
 
 exports.create = catchAsync(async (req, res) => {
   const { username, password, name, lastname } = req.body;
-  await userServices.create({ username, password, name, lastname });
+  const user = await userServices.create({
+    username,
+    password,
+    name,
+    lastname,
+  });
   return res.status(201).json({
     status: 'success',
     message: 'User created successfully',
+    user: { id: user.id, username: user.username },
   });
 });
 
@@ -20,18 +26,18 @@ exports.getUsersInformations = catchAsync(async (req, res) => {
 
 exports.userLogin = catchAsync(async (req, res, next) => {
   const { username, password } = req.body;
+
   const user = await userServices.getUser(username);
-  if (!user) {
-    return next(new AppError('Invalid username', 400));
-  }
+  if (!user) return next(new AppError('Invalid username', 400));
+
   const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) {
+  if (!isValid)
     return next(new AppError("The password doesn't match with username", 400));
-  }
+
   const { id, passwordChanged } = user;
-  console.log(user.UsersRoles[0]);
   const role = user.UsersRoles[0]?.Role.name;
   const token = AuthServices.genToken({ id, username, role, passwordChanged });
+
   return res.json({ token, mustChangePassword: !passwordChanged });
 });
 
@@ -56,29 +62,49 @@ exports.deleteUser = catchAsync(async (req, res) => {
 
 exports.changePassword = catchAsync(async (req, res, next) => {
   const { currentPassword, newPassword } = req.body;
-  const { id } = req.user; // viene del token vía middleware authenticate
+  const { id, role, username } = req.user; // viene del token vía middleware authenticate
 
-  const user = await userServices.getUserRawById(id); // método nuevo (ver abajo)
+  // ── Validaciones básicas ──────────────────────────────────────────────────
+  if (!currentPassword || !newPassword) {
+    return next(
+      new AppError('Debes proporcionar la contraseña actual y la nueva', 400),
+    );
+  }
+
+  if (newPassword.length < 8) {
+    return next(
+      new AppError('La nueva contraseña debe tener al menos 8 caracteres', 400),
+    );
+  }
+
+  // ── Buscar usuario con contraseña (raw, sin excluirla) ────────────────────
+  const user = await userServices.getUserRawById(id);
   if (!user) return next(new AppError('Usuario no encontrado', 404));
 
+  // ── Verificar contraseña actual ───────────────────────────────────────────
   const isValid = await bcrypt.compare(currentPassword, user.password);
-  if (!isValid) return next(new AppError('Contraseña actual incorrecta', 400));
+  if (!isValid)
+    return next(new AppError('La contraseña actual es incorrecta', 400));
 
-  if (currentPassword === newPassword)
+  // ── La nueva no puede ser igual a la actual ───────────────────────────────
+  const isSame = await bcrypt.compare(newPassword, user.password);
+  if (isSame) {
     return next(
       new AppError('La nueva contraseña debe ser diferente a la actual', 400),
     );
+  }
 
+  // ── Hashear y guardar ─────────────────────────────────────────────────────
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(newPassword, salt);
 
   await userServices.updatePassword(id, hashedPassword);
 
-  // Emitir un token fresco con passwordChanged: true
+  // ── Emitir token fresco con passwordChanged: true ─────────────────────────
   const newToken = AuthServices.genToken({
     id,
-    username: user.username,
-    role: req.user.role,
+    username: username,
+    role,
     passwordChanged: true,
   });
 

@@ -1,9 +1,9 @@
 const db = require('../database/models/index');
 
 class paymentsServices {
-  static async registerPayment(orderId, amount, method) {
+  static async registerPayment(orderId, ammount, method) {
     const paidAt = new Date();
-    await db.Payments.create({ orderId, amount, method, paidAt });
+    await db.Payments.create({ orderId, ammount, method, paidAt });
   }
 
   static async getAllPayments() {

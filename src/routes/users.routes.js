@@ -4,7 +4,6 @@ const userController = require('../controllers/users.controller');
 const authenticate = require('../middlewares/auth.middleware');
 const { allowRoles } = require('../middlewares/role.middleware');
 
-
 const router = Router();
 
 router.get(
@@ -43,5 +42,7 @@ router.patch(
   authenticate,
   userController.changePassword,
 );
+
+router.put('/users/:id/password', authenticate, userController.changePassword);
 
 module.exports = router;

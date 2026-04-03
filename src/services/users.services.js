@@ -95,6 +95,14 @@ class UserServices {
       throw error;
     }
   }
+
+  static async getUserRawById(id) {
+    try {
+      return await db.User.findOne({ where: { id } });
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = UserServices;
