@@ -1,5 +1,5 @@
 'use strict';
-
+/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('products_ingredients', {
@@ -24,19 +24,6 @@ module.exports = {
         references: { model: 'ingredients', key: 'id' },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
-      },
-      quantity: {
-        // cantidad del ingrediente requerida para 1 porción del producto
-        type: Sequelize.FLOAT,
-        allowNull: false,
-        defaultValue: 0,
-      },
-      // Override por orden: si el cliente pide "sin cebolla" se guarda aquí
-      overrideQuantity: {
-        type: Sequelize.FLOAT,
-        field: 'override_quantity',
-        allowNull: true,
-        defaultValue: null,
       },
       createdAt: {
         allowNull: false,

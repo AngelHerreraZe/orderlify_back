@@ -1,5 +1,5 @@
 'use strict';
-
+/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('ingredients', {
@@ -12,15 +12,6 @@ module.exports = {
       name: {
         type: Sequelize.STRING,
         allowNull: false,
-      },
-      unit: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      stock: {
-        type: Sequelize.FLOAT,
-        allowNull: false,
-        defaultValue: 0,
       },
       createdAt: {
         allowNull: false,

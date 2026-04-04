@@ -1,18 +1,20 @@
 'use strict';
 const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Products extends Model {
     static associate(models) {
       Products.belongsTo(models.Categories, { foreignKey: 'categoryId' });
       Products.hasMany(models.OrdersItems, { foreignKey: 'productId' });
       Products.belongsToMany(models.Ingredients, {
-        through: models.ProductsIngredients,
-        foreignKey: 'productId',
-        otherKey: 'ingredientId',
+        through: 'products_ingredients',
+        foreignKey: 'product_id',
+        otherKey: 'ingredient_id',
+        as: 'ingredients',
       });
-      Products.hasMany(models.ProductsIngredients, { foreignKey: 'productId' });
     }
   }
+
   Products.init(
     {
       id: {
@@ -47,7 +49,8 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       tableName: 'products',
       modelName: 'Products',
-    },
+    }
   );
+
   return Products;
 };

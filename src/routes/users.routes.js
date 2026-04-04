@@ -37,12 +37,12 @@ router
     userController.deleteUser,
   );
 
-router.patch(
+router.post(
   '/auth/change-password',
   authenticate,
   userController.changePassword,
 );
 
-router.put('/users/:id/password', authenticate, userController.changePassword);
+router.get('/me', authenticate, userController.getMe);
 
 module.exports = router;

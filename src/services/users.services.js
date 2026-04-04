@@ -96,12 +96,46 @@ class UserServices {
     }
   }
 
-  static async getUserRawById(id) {
-    try {
-      return await db.User.findOne({ where: { id } });
-    } catch (error) {
-      throw error;
+  static async changePassword(id, currentPassword, newPassword) {
+    const user = await db.User.findOne({
+      where: { id },
+      include: [
+        {
+          model: db.UsersRoles,
+          include: [
+            {
+              model: db.Roles,
+              attributes: ['name'],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!user) {
+      const err = new Error('Usuario no encontrado');
+      err.status = 404;
+      throw err;
     }
+
+    const bcrypt = require('bcrypt');
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isValid) {
+      const err = new Error('La contraseña actual es incorrecta');
+      err.status = 400;
+      throw err;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashed = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashed;
+    user.passwordChanged = true;
+
+    await user.save();
+
+    return user;
   }
 }
 
