@@ -4,9 +4,16 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Products extends Model {
     static associate(models) {
-      Products.belongsTo(models.Categories, { foreignKey: 'categoryId' });
-      Products.hasMany(models.OrdersItems, { foreignKey: 'productId' });
-
+      Products.belongsTo(models.Categories,    { foreignKey: 'categoryId' });
+      Products.belongsTo(models.Company,       { foreignKey: 'companyId', as: 'company' });
+      Products.hasMany(models.OrdersItems,     { foreignKey: 'productId' });
+      Products.hasMany(models.BranchProducts,  { foreignKey: 'productId', as: 'branchProductLinks' });
+      Products.belongsToMany(models.Branch, {
+        through: models.BranchProducts,
+        foreignKey: 'productId',
+        otherKey: 'branchId',
+        as: 'branches',
+      });
     }
   }
 
@@ -38,6 +45,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         field: 'category_id',
         allowNull: false,
+      },
+      companyId: {
+        type: DataTypes.INTEGER,
+        field: 'company_id',
+        allowNull: true,
       },
     },
     {

@@ -1,14 +1,15 @@
-const catchAsync = require('../utils/catchAsync');
+'use strict';
+const catchAsync      = require('../utils/catchAsync');
 const paymentsServices = require('../services/payments.services');
 
 exports.registerPayment = catchAsync(async (req, res) => {
   const { orderId, amount, method } = req.body;
-  await paymentsServices.registerPayment(orderId, amount, method);
+  await paymentsServices.registerPayment(orderId, amount, method, req.tenant);
   return res.sendStatus(200);
 });
 
 exports.getAllPayments = catchAsync(async (req, res) => {
-  const payments = await paymentsServices.getAllPayments();
+  const payments = await paymentsServices.getAllPayments(req.tenant);
   return res.json({ payments });
 });
 

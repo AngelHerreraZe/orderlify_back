@@ -13,9 +13,15 @@ const initSocket = (server) => {
   io.on('connection', (socket) => {
     console.log(`Cliente conectado: ${socket.id}`)
 
-    // El cliente anuncia a qué sala pertenece según su rol
+    // Join role-based room (e.g. 'Admin', 'Mesero')
     socket.on('join:role', (role) => {
       socket.join(role)
+    })
+
+    // Join branch-scoped room (e.g. 'branch:3')
+    // Controllers emit to this room for branch-filtered real-time events
+    socket.on('join:branch', (branchId) => {
+      if (branchId) socket.join(`branch:${branchId}`)
     })
 
     socket.on('disconnect', () => {
@@ -25,9 +31,6 @@ const initSocket = (server) => {
 }
 
 // Esta función la importan los controllers para emitir eventos
-const getIO = () => {
-  if (!io) throw new Error('Socket.io no inicializado')
-  return io
-}
+const getIO = () => io ?? null
 
 module.exports = { initSocket, getIO }

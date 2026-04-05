@@ -2,14 +2,14 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Tables extends Model {
+  class UsersBranches extends Model {
     static associate(models) {
-      Tables.hasMany(models.Orders,  { foreignKey: 'tableId' });
-      Tables.belongsTo(models.Branch, { foreignKey: 'branchId', as: 'branch' });
+      UsersBranches.belongsTo(models.User,   { foreignKey: 'userId' });
+      UsersBranches.belongsTo(models.Branch, { foreignKey: 'branchId' });
     }
   }
 
-  Tables.init(
+  UsersBranches.init(
     {
       id: {
         allowNull: false,
@@ -17,28 +17,23 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         type: DataTypes.INTEGER,
       },
-      tableNumber: {
+      userId: {
         type: DataTypes.INTEGER,
+        field: 'user_id',
         allowNull: false,
-        field: 'table_number',
-      },
-      capacity: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 4,
       },
       branchId: {
         type: DataTypes.INTEGER,
         field: 'branch_id',
-        allowNull: true,
+        allowNull: false,
       },
     },
     {
       sequelize,
-      tableName: 'tables',
-      modelName: 'Tables',
+      tableName: 'users_branches',
+      modelName: 'UsersBranches',
     }
   );
 
-  return Tables;
+  return UsersBranches;
 };

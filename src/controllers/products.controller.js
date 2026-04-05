@@ -1,14 +1,16 @@
-const catchAsync = require('../utils/catchAsync');
+'use strict';
+const catchAsync      = require('../utils/catchAsync');
 const productsServices = require('../services/products.services');
 
 exports.createProduct = catchAsync(async (req, res) => {
   const { name, description, price, categoryId } = req.body;
-  const product = await productsServices.createProduct(name, description, price, categoryId);
+  const companyId = req.tenant?.companyId ?? null;
+  const product = await productsServices.createProduct(name, description, price, categoryId, companyId);
   return res.status(201).json({ product });
 });
 
 exports.getProducts = catchAsync(async (req, res) => {
-  const products = await productsServices.getProducts();
+  const products = await productsServices.getProducts(req.tenant);
   return res.json({ products });
 });
 
@@ -32,12 +34,13 @@ exports.deleteProduct = catchAsync(async (req, res) => {
 });
 
 exports.getCategories = catchAsync(async (req, res) => {
-  const categories = await productsServices.getCategories();
+  const categories = await productsServices.getCategories(req.tenant);
   return res.json({ categories });
 });
 
 exports.createCategory = catchAsync(async (req, res) => {
   const { name } = req.body;
-  await productsServices.createCategory(name);
+  const companyId = req.tenant?.companyId ?? null;
+  await productsServices.createCategory(name, companyId);
   return res.sendStatus(200);
 });

@@ -6,24 +6,24 @@ const fs = require('fs');
 const path = require('path');
 
 exports.getOverView = catchAsync(async (req, res) => {
-  const dailyOverview = await adminServices.dailyOverview();
+  const dailyOverview = await adminServices.dailyOverview(req.tenant);
   return res.json({ dailyOverview });
 });
 
 exports.getWeeklyOverView = catchAsync(async (req, res) => {
-  const weeklyOverview = await adminServices.getWeeklyOverView();
+  const weeklyOverview = await adminServices.getWeeklyOverView(req.tenant);
   return res.json({ weeklyOverview });
 });
 
 exports.getReports = catchAsync(async (req, res) => {
   const { startDate, endDate } = req.query;
-  const report = await adminServices.getReports(startDate, endDate);
+  const report = await adminServices.getReports(startDate, endDate, req.tenant);
   return res.json({ report });
 });
 
 exports.genExcel = catchAsync(async (req, res, next) => {
   const { startDate, endDate } = req.params;
-  const totalSales = await adminServices.genExcel(startDate, endDate);
+  const totalSales = await adminServices.genExcel(startDate, endDate, req.tenant);
   const workbook = await generateOrdersReport(totalSales);
   const filePath = path.join(__dirname, '../temp/reporte_ventas.xlsx');
   await workbook.xlsx.writeFile(filePath);

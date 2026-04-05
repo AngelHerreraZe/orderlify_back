@@ -1,44 +1,28 @@
+'use strict';
 const db = require('../database/models/index');
 
 class tablesServices {
-  static async createTable(tableNumber, capacity) {
-    try {
-      await db.Tables.create({
-        tableNumber,
-        capacity,
-      });
-    } catch (error) {
-      throw error;
-    }
+  static async createTable(tableNumber, capacity, branchId = null) {
+    await db.Tables.create({ tableNumber, capacity, branchId });
   }
 
-  static async getTables() {
-    try {
-      const tables = await db.Tables.findAll({
-        include: { all: true },
-      });
-      return tables;
-    } catch (error) {
-      throw error;
-    }
+  static async getTables(tenant = {}) {
+    const where = {};
+    if (tenant.branchId) where.branchId = tenant.branchId;
+
+    const tables = await db.Tables.findAll({
+      where,
+      include: { all: true },
+    });
+    return tables;
   }
 
   static async updateTable(id, tableNumber, capacity) {
-    try {
-      await db.Tables.update({ tableNumber, capacity }, { where: { id } });
-    } catch (error) {
-      throw error;
-    }
+    await db.Tables.update({ tableNumber, capacity }, { where: { id } });
   }
 
   static async deleteTable(id) {
-    try {
-      await db.Tables.destroy({
-        where: { id },
-      });
-    } catch (error) {
-      throw error;
-    }
+    await db.Tables.destroy({ where: { id } });
   }
 }
 

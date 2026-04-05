@@ -100,5 +100,6 @@ exports.getMe = catchAsync(async (req, res, next) => {
     username: user.username,
     role: user.UsersRoles?.[0]?.Role?.name ?? req.user.role,
     passwordChanged: raw.passwordChanged, // booleano desde la BD ✅
+    companyId: raw.companyId ?? null,     // multi-tenant context
   });
 });

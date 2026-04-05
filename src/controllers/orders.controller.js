@@ -1,14 +1,15 @@
-const catchAsync = require('../utils/catchAsync');
+'use strict';
+const catchAsync     = require('../utils/catchAsync');
 const ordersServices = require('../services/orders.services');
 
 exports.createOrder = catchAsync(async (req, res) => {
   const { tableId, userId, status, total } = req.body;
-  const order = await ordersServices.createOrder(tableId, userId, status, total);
+  const order = await ordersServices.createOrder(tableId, userId, status, total, req.tenant);
   return res.status(201).json({ order });
 });
 
 exports.getOrders = catchAsync(async (req, res) => {
-  const orders = await ordersServices.getOrders();
+  const orders = await ordersServices.getOrders(req.tenant);
   return res.json({ orders });
 });
 
@@ -32,12 +33,11 @@ exports.deleteOrder = catchAsync(async (req, res) => {
 });
 
 exports.addItemsToOrder = catchAsync(async (req, res) => {
-  const items = req.body;
+  const items   = req.body;
   const orderId = req.params.orderId;
   const itemsArray = Object.values(items).map((item) => ({
     ...item,
     orderId: parseInt(orderId),
-    // excludedIngredients comes directly from the item if present
     excludedIngredients: item.excludedIngredients ?? null,
   }));
   await ordersServices.addItemsToOrder(itemsArray);
@@ -46,8 +46,8 @@ exports.addItemsToOrder = catchAsync(async (req, res) => {
 
 exports.editOrderItems = catchAsync(async (req, res) => {
   const { orderId, productId } = req.params;
-  const { quantity, price, excludedIngredients } = req.body;
-  await ordersServices.editOrderItems(orderId, productId, quantity, price, excludedIngredients);
+  const { quantity, price }    = req.body;
+  await ordersServices.editOrderItems(orderId, productId, quantity, price);
   return res.sendStatus(204);
 });
 

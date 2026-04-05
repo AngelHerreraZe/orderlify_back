@@ -1,28 +1,45 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Categories extends Model {
     static associate(models) {
-      Categories.hasMany(models.Products, {foreignKey: 'categoryId'})
+      Categories.hasMany(models.Products, { foreignKey: 'categoryId' });
+      Categories.belongsTo(models.Company, { foreignKey: 'companyId', as: 'company' });
     }
   }
-  Categories.init({
-    id: {
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
-      type: DataTypes.INTEGER,
+
+  Categories.init(
+    {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: DataTypes.INTEGER,
+      },
+      name: {
+        type: DataTypes.ENUM(
+          'Entrada',
+          'Plato Fuerte',
+          'Postre',
+          'Bebidas sin alcohol',
+          'Bebidas con alcohol',
+          'Infantil'
+        ),
+        allowNull: false,
+      },
+      companyId: {
+        type: DataTypes.INTEGER,
+        field: 'company_id',
+        allowNull: true,
+      },
     },
-    name: {
-      type: DataTypes.ENUM('Entrada','Plato Fuerte','Postre','Bebidas sin alcohol','Bebidas con alcohol','Infantil'),
-      allowNull: false,
+    {
+      sequelize,
+      tableName: 'categories',
+      modelName: 'Categories',
     }
-  }, {
-    sequelize,
-    tableName: 'categories',
-    modelName: 'Categories',
-  });
+  );
+
   return Categories;
 };
