@@ -35,26 +35,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      removedIngredients: {
+      notes: {
         type: DataTypes.TEXT,
-        field: 'removed_ingredients',
         allowNull: true,
         defaultValue: null,
-        get() {
-          const raw = this.getDataValue('removedIngredients');
-          if (!raw) return [];
-          try {
-            return JSON.parse(raw);
-          } catch {
-            return [];
-          }
-        },
-        set(value) {
-          this.setDataValue(
-            'removedIngredients',
-            value && value.length > 0 ? JSON.stringify(value) : null
-          );
-        },
       },
     },
     {

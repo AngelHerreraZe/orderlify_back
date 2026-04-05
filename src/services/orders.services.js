@@ -16,15 +16,10 @@ class ordersServices {
         include: [
           {
             model: db.OrdersItems,
-            include: [
-              {
-                model: db.Products,
-                include: [{ model: db.Ingredients, as: 'ingredients', attributes: ['id', 'name'] }],
-              },
-            ],
+            include: [{ model: db.Products }],
           },
-          { model: db.User,   attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
-          { model: db.Tables, attributes: ['id', 'tableNumber', 'capacity'] },
+          { model: db.User,   as: 'user',  attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
+          { model: db.Tables, as: 'table', attributes: ['id', 'tableNumber', 'capacity'] },
         ],
       });
       return orders;
@@ -40,15 +35,10 @@ class ordersServices {
         include: [
           {
             model: db.OrdersItems,
-            include: [
-              {
-                model: db.Products,
-                include: [{ model: db.Ingredients, as: 'ingredients', attributes: ['id', 'name'] }],
-              },
-            ],
+            include: [{ model: db.Products }],
           },
-          { model: db.User,   attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
-          { model: db.Tables, attributes: ['id', 'tableNumber', 'capacity'] },
+          { model: db.User,   as: 'user',  attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
+          { model: db.Tables, as: 'table', attributes: ['id', 'tableNumber', 'capacity'] },
         ],
       });
       return order;
@@ -74,19 +64,17 @@ class ordersServices {
   }
 
   /**
-   * Cada elemento del array puede traer { productId, quantity, price, removedIngredients? }
-   * removedIngredients es un array de strings (nombres de ingredientes a omitir).
+   * Cada elemento del array puede traer { productId, quantity, price, notes? }
+   * notes es texto libre con especificaciones del cliente.
    */
   static async addItemsToOrder(itemsArray) {
     try {
       const rows = itemsArray.map((item) => ({
-        orderId:            item.orderId,
-        productId:          item.productId,
-        quantity:           item.quantity,
-        price:              item.price,
-        removedIngredients: item.removedIngredients?.length
-          ? JSON.stringify(item.removedIngredients)
-          : null,
+        orderId:   item.orderId,
+        productId: item.productId,
+        quantity:  item.quantity,
+        price:     item.price,
+        notes:     item.notes || null,
       }));
       await db.OrdersItems.bulkCreate(rows);
     } catch (error) {

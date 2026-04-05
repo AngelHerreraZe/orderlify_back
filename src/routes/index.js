@@ -1,11 +1,11 @@
-const userRoutes        = require('./users.routes');
-const rolesRoutes       = require('./roles.routes');
-const productsRoutes    = require('./products.routes');
-const tablesRoutes      = require('./tables.routes');
-const ordersRoutes      = require('./orders.routes');
-const paymentsRoutes    = require('./payments.route');
-const adminRoutes       = require('./admin.routes');
-const ingredientsRoutes = require('./ingredients.routes');
+const userRoutes           = require('./users.routes');
+const rolesRoutes          = require('./roles.routes');
+const productsRoutes       = require('./products.routes');
+const tablesRoutes         = require('./tables.routes');
+const ordersRoutes         = require('./orders.routes');
+const paymentsRoutes       = require('./payments.route');
+const adminRoutes          = require('./admin.routes');
+const companyInfoRoutes    = require('./companyInfo.routes');
 
 const ApiRoutes = (app) => {
   app.use('/api/v1/', userRoutes);
@@ -15,7 +15,7 @@ const ApiRoutes = (app) => {
   app.use('/api/v1/', ordersRoutes);
   app.use('/api/v1/', paymentsRoutes);
   app.use('/api/v1/', adminRoutes);
-  app.use('/api/v1/', ingredientsRoutes);
+  app.use('/api/v1/', companyInfoRoutes);
 };
 
 module.exports = ApiRoutes;

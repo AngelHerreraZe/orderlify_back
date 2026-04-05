@@ -7,8 +7,8 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Orders.hasMany(models.OrdersItems, {foreignKey: 'orderId'})
       Orders.hasMany(models.Payments, {foreignKey: 'orderId'})
-      Orders.belongsTo(models.User, {foreignKey: 'userId'})
-      Orders.belongsTo(models.Tables, {foreignKey: 'tableId'})
+      Orders.belongsTo(models.User,   { foreignKey: 'userId',  as: 'user'  })
+      Orders.belongsTo(models.Tables, { foreignKey: 'tableId', as: 'table' })
     }
   }
   Orders.init({

@@ -7,8 +7,8 @@ const rateLimit = require('express-rate-limit');
 const sanitize = require('./middlewares/sanitize.middleware');
 const ApiRoutes = require('./routes');
 const errorHandlerRouter = require('./routes/error.handler.routes');
-const swaggerUi = require("swagger-ui-express");
-const swaggerDoc = require("./swagger.json");
+const swaggerUi = require('swagger-ui-express');
+const swaggerDoc = require('./swagger.json');
 
 const app = express();
 
@@ -24,7 +24,7 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-app.use("/api/v1/docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 app.use(helmet());
 app.use(express.json());
 app.use(
@@ -32,7 +32,7 @@ app.use(
     origin: process.env.ALLOWED_ORIGINS?.split(',') || 'http://localhost:5173',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'auth-token'],
-  })
+  }),
 );
 app.use(sanitize);
 app.use(hpp());

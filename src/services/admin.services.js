@@ -55,7 +55,7 @@ class adminServices {
       where: Sequelize.where(fn('DATE', col('Orders.createdAt')), today),
       include: [
         { model: db.OrdersItems, include: [{ model: db.Products }] },
-        { model: db.User, attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
+        { model: db.User, as: 'user', attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
       ],
     });
 
@@ -89,7 +89,7 @@ class adminServices {
       where: { createdAt: { [Op.between]: [endDate, startDate] } },
       include: [
         { model: db.OrdersItems, include: [{ model: db.Products }] },
-        { model: db.User, attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
+        { model: db.User, as: 'user', attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
       ],
     });
 
@@ -121,7 +121,7 @@ class adminServices {
           model: db.OrdersItems,
           include: [{ model: db.Products, include: [{ model: db.Categories }] }],
         },
-        { model: db.User, attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
+        { model: db.User, as: 'user', attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
       ],
     });
 
@@ -160,7 +160,7 @@ class adminServices {
       where: { createdAt: { [Op.between]: [new Date(startDate), new Date(endDate)] } },
       include: [
         { model: db.OrdersItems, include: [{ model: db.Products, include: [{ model: db.Categories }] }] },
-        { model: db.User, attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
+        { model: db.User, as: 'user', attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
       ],
     });
     return orders;

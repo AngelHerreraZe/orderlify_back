@@ -21,12 +21,5 @@ router
   .get(productsController.getCategories)
   .post(productsController.createCategory);
 
-// ─── Ingredients ──────────────────────────────────────────────────────────────
-router
-  .route('/ingredients')
-  .get(productsController.getAllIngredients)
-  .post(productsController.createIngredient);
-
-router.delete('/ingredients/:id', productsController.deleteIngredient);
 
 module.exports = router;
