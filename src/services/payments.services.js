@@ -2,10 +2,18 @@
 const db = require('../database/models/index');
 
 class paymentsServices {
-  static async registerPayment(orderId, ammount, method, tenant = {}) {
+  static async registerPayment(orderId, amount, method, receivedAmount, tenant = {}) {
     const { companyId = null, branchId = null } = tenant;
-    const paidAt = new Date();
-    await db.Payments.create({ orderId, ammount, method, paidAt, companyId, branchId });
+    const paidAt      = new Date();
+    const changeGiven = (method === 'Efectivo' && receivedAmount != null)
+      ? Math.max(0, parseFloat(receivedAmount) - parseFloat(amount))
+      : null;
+    const payment = await db.Payments.create({
+      orderId, amount, method, paidAt, companyId, branchId,
+      receivedAmount: method === 'Efectivo' ? (receivedAmount ?? null) : null,
+      changeGiven,
+    });
+    return payment.toJSON();
   }
 
   static async getAllPayments(tenant = {}) {

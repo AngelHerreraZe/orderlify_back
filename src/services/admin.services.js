@@ -64,8 +64,10 @@ class adminServices {
 
     const totalSales = await db.Orders.findAll({
       where: {
-        ...tenantWhere(tenant),
-        ...Sequelize.where(fn('DATE', col('Orders.createdAt')), today),
+        [Op.and]: [
+          tenantWhere(tenant),
+          Sequelize.where(fn('DATE', col('Orders.createdAt')), today),
+        ],
       },
       include: [
         { model: db.OrdersItems, include: [{ model: db.Products }] },

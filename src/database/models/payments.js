@@ -45,6 +45,16 @@ module.exports = (sequelize, DataTypes) => {
         field: 'branch_id',
         allowNull: true,
       },
+      receivedAmount: {
+        type: DataTypes.FLOAT,
+        field: 'received_amount',
+        allowNull: true,
+      },
+      changeGiven: {
+        type: DataTypes.FLOAT,
+        field: 'change_given',
+        allowNull: true,
+      },
     },
     {
       sequelize,

@@ -3,7 +3,8 @@ const db = require('../database/models/index');
 
 class tablesServices {
   static async createTable(tableNumber, capacity, branchId = null) {
-    await db.Tables.create({ tableNumber, capacity, branchId });
+    const table = await db.Tables.create({ tableNumber, capacity, branchId });
+    return table.toJSON();
   }
 
   static async getTables(tenant = {}) {

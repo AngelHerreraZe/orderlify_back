@@ -8,7 +8,8 @@ const paymentsRoutes    = require('./payments.route');
 const adminRoutes       = require('./admin.routes');
 const companyInfoRoutes = require('./companyInfo.routes');
 const branchesRoutes    = require('./branches.routes');
-const stationsRoutes    = require('./stations.routes');
+const stationsRoutes      = require('./stations.routes');
+const cashRegisterRoutes  = require('./cashRegister.routes');
 
 const ApiRoutes = (app) => {
   app.use('/api/v1/', userRoutes);
@@ -21,6 +22,7 @@ const ApiRoutes = (app) => {
   app.use('/api/v1/', companyInfoRoutes);
   app.use('/api/v1/', branchesRoutes);
   app.use('/api/v1/', stationsRoutes);
+  app.use('/api/v1/', cashRegisterRoutes);
 };
 
 module.exports = ApiRoutes;
