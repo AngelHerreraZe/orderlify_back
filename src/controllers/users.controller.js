@@ -26,14 +26,51 @@ exports.getUsersInformations = catchAsync(async (req, res) => {
 
 exports.userLogin = catchAsync(async (req, res, next) => {
   const { username, password } = req.body;
-  const user = await userServices.getUser(username);
-  if (!user) return next(new AppError('Invalid username', 400));
+
+  // Subdominio opcional: permite inferir la empresa sin selección manual.
+  // El frontend envía el subdominio de la URL (ej: "pepito" de pepito.mipos.com).
+  const subdomain = req.headers['x-subdomain'] ?? null;
+
+  const user = await userServices.getUser(username, subdomain);
+
+  // Mensaje genérico deliberado — no revelar si es username o password
+  if (!user) return next(new AppError('Credenciales inválidas', 401));
+  if (!user.active) return next(new AppError('Credenciales inválidas', 401));
+
+  // Validar empresa antes de verificar contraseña
+  if (!user.company) {
+    return next(new AppError('Usuario sin empresa asignada', 403));
+  }
+  if (user.company.status !== 'active') {
+    return next(
+      new AppError('Empresa suspendida. Contacte a soporte.', 403),
+    );
+  }
 
   const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) return next(new AppError("Password doesn't match", 400));
+  if (!isValid) return next(new AppError('Credenciales inválidas', 401));
 
-  const token = AuthServices.genToken({ id: user.id, username: user.username });
-  return res.json({ token });
+  const role = user.UsersRoles?.[0]?.Role?.name ?? null;
+
+  // companyId va en el token — tenant.middleware.js lo extrae de aquí
+  const token = AuthServices.genToken({
+    id: user.id,
+    username: user.username,
+    companyId: user.companyId,
+    role,
+    passwordChanged: user.passwordChanged,
+  });
+
+  return res.json({
+    token,
+    user: {
+      id: user.id,
+      name: user.name,
+      role,
+      companyId: user.companyId,
+      passwordChanged: user.passwordChanged,
+    },
+  });
 });
 
 exports.getUserbyId = catchAsync(async (req, res) => {

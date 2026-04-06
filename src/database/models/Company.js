@@ -56,6 +56,16 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: true,
         allowNull: false,
       },
+      status: {
+        type: DataTypes.ENUM('active', 'suspended', 'canceled'),
+        defaultValue: 'active',
+        allowNull: false,
+      },
+      subdomain: {
+        type: DataTypes.STRING(63),
+        allowNull: true,
+        unique: true,
+      },
       plan: {
         type: DataTypes.ENUM('uniestacion', 'unisucursal', 'multisucursal'),
         defaultValue: 'unisucursal',

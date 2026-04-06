@@ -1,21 +1,42 @@
 'use strict';
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+
 /**
  * Tenant context middleware.
  *
- * Reads x-company-id and x-branch-id from request headers (sent by the
- * frontend) and attaches them to req.tenant so any controller/service can
- * use them without re-reading headers manually.
+ * companyId → extraído del JWT (seguro, no spoofable).
+ *   El frontend NO necesita enviar x-company-id.
  *
- * Falls back gracefully: if headers are absent the values are null, which
- * causes queries to omit the WHERE clause filter (backwards-compatible with
- * single-tenant mode).
+ * branchId / stationId → headers opcionales (x-branch-id, x-station-id).
+ *   El usuario puede cambiar de sucursal en la misma sesión, por eso
+ *   viajan en header. Se valida en controller que branch pertenece a la
+ *   empresa del token (ver utils/tenantValidation.js).
+ *
+ * Si no hay token (ruta pública como /login), req.tenant = null.
  */
 const extractTenant = (req, _res, next) => {
-  const companyId  = parseInt(req.headers['x-company-id'],  10) || null;
-  const branchId   = parseInt(req.headers['x-branch-id'],   10) || null;
-  const stationId  = parseInt(req.headers['x-station-id'],  10) || null;
+  const token = req.headers['auth-token'];
 
-  req.tenant = { companyId, branchId, stationId };
+  if (!token) {
+    req.tenant = null;
+    return next();
+  }
+
+  try {
+    // No re-verificamos la firma aquí — authenticate() ya lo hizo.
+    // Solo decodificamos para extraer companyId sin overhead extra.
+    const decoded = jwt.decode(token);
+
+    req.tenant = {
+      companyId:  decoded?.companyId ?? null, // del JWT, nunca del header
+      branchId:   parseInt(req.headers['x-branch-id'],   10) || null,
+      stationId:  parseInt(req.headers['x-station-id'],  10) || null,
+    };
+  } catch {
+    req.tenant = null;
+  }
+
   next();
 };
 

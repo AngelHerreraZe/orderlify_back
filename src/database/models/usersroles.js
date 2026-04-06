@@ -25,7 +25,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       field: 'role_id',
       defaultValue: 0
-    }
+    },
+    isPrimary: {
+      type: DataTypes.BOOLEAN,
+      field: 'is_primary',
+      allowNull: false,
+      defaultValue: false,
+    },
   }, {
     sequelize,
     tableName: 'users_roles',

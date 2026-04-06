@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
         field: 'order_id',
         allowNull: false,
       },
-      ammount: {
+      amount: {
         type: DataTypes.FLOAT,
         allowNull: false,
       },

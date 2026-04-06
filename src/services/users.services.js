@@ -23,11 +23,32 @@ class UserServices {
     }
   }
 
-  static async getUser(username) {
+  static async getUser(username, subdomain = null) {
     try {
+      const where = { username };
+
+      // Si se envía subdominio, filtrar usuarios de esa empresa específica
+      if (subdomain) {
+        const company = await db.Company.findOne({
+          where: { subdomain },
+          attributes: ['id'],
+        });
+        // Si el subdominio no existe, devolver null de forma segura
+        if (!company) return null;
+        where.companyId = company.id;
+      }
+
       const user = await db.User.findOne({
-        where: { username: username },
-        include: [{ model: db.UsersRoles, include: [{ model: db.Roles }] }],
+        where,
+        include: [
+          // Rol primario primero; fallback a cualquiera si no hay primario
+          {
+            model: db.UsersRoles,
+            include: [{ model: db.Roles }],
+          },
+          // Empresa: para validar status en el login
+          { model: db.Company, as: 'company', attributes: ['id', 'status', 'subdomain'] },
+        ],
       });
       return user;
     } catch (error) {
