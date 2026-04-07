@@ -58,7 +58,7 @@ module.exports = {
         field: 'opened_by',
         type: Sequelize.INTEGER,
         allowNull: true,
-        references: { model: 'users', key: 'id' },
+        references: { model: 'user', key: 'id' },
         onDelete: 'SET NULL',
         onUpdate: 'CASCADE',
       },
