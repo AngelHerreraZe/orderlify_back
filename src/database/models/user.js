@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: 'branchId',
         as: 'branches',
       });
+      User.hasMany(models.UserSession, { foreignKey: 'userId', as: 'sessions' });
     }
   }
 

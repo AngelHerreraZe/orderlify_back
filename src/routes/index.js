@@ -10,6 +10,7 @@ const companyInfoRoutes = require('./companyInfo.routes');
 const branchesRoutes    = require('./branches.routes');
 const stationsRoutes      = require('./stations.routes');
 const cashRegisterRoutes  = require('./cashRegister.routes');
+const usersSyncRoutes     = require('./usersSync.routes');
 
 const ApiRoutes = (app) => {
   app.use('/api/v1/', userRoutes);
@@ -23,6 +24,7 @@ const ApiRoutes = (app) => {
   app.use('/api/v1/', branchesRoutes);
   app.use('/api/v1/', stationsRoutes);
   app.use('/api/v1/', cashRegisterRoutes);
+  app.use('/api/v1/', usersSyncRoutes);
 };
 
 module.exports = ApiRoutes;
