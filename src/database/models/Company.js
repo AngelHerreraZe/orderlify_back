@@ -1,5 +1,6 @@
 'use strict';
 const { Model } = require('sequelize');
+const { generateUniqueSerial } = require('../../utils/generateSerial');
 
 module.exports = (sequelize, DataTypes) => {
   class Company extends Model {
@@ -66,6 +67,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         unique: true,
       },
+      serial: {
+        type: DataTypes.STRING(35),
+        allowNull: true,
+        unique: true,
+      },
       plan: {
         type: DataTypes.ENUM('uniestacion', 'unisucursal', 'multisucursal'),
         defaultValue: 'unisucursal',
@@ -76,6 +82,13 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       tableName: 'companies',
       modelName: 'Company',
+      hooks: {
+        beforeCreate: async (company) => {
+          if (!company.serial) {
+            company.serial = await generateUniqueSerial(Company);
+          }
+        },
+      },
     }
   );
 

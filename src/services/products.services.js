@@ -1,4 +1,5 @@
 'use strict';
+const { Op } = require('sequelize');
 const db = require('../database/models/index');
 
 class productsServices {
@@ -12,18 +13,25 @@ class productsServices {
   /**
    * Get products for a branch via branch_products (branch-specific availability
    * and price override).  Falls back to company-wide list when branchId is absent.
+   * @param {object} tenant - { companyId, branchId }
+   * @param {string|null} since - ISO timestamp; if set, only return products updated after this date
    */
-  static async getProducts(tenant = {}) {
+  static async getProducts(tenant = {}, since = null) {
     const { companyId, branchId } = tenant;
+    const sinceDate = since ? new Date(since) : null;
 
     if (branchId) {
       // Return products available at the branch, merging branch price override
+      const productWhere = {};
+      if (companyId) productWhere.companyId = companyId;
+      if (sinceDate)  productWhere.updatedAt = { [Op.gt]: sinceDate };
+
       const branchProducts = await db.BranchProducts.findAll({
         where: { branchId, available: true },
         include: [
           {
             model: db.Products,
-            where: companyId ? { companyId } : undefined,
+            where: Object.keys(productWhere).length ? productWhere : undefined,
             include: [{ model: db.Categories, attributes: { exclude: ['createdAt', 'updatedAt'] } }],
             attributes: { exclude: ['createdAt', 'updatedAt'] },
           },
@@ -45,6 +53,7 @@ class productsServices {
     // Fallback: no branchId — return all company products
     const where = {};
     if (companyId) where.companyId = companyId;
+    if (sinceDate)  where.updatedAt = { [Op.gt]: sinceDate };
 
     const products = await db.Products.findAll({
       where,

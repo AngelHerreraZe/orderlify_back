@@ -10,7 +10,8 @@ exports.createProduct = catchAsync(async (req, res) => {
 });
 
 exports.getProducts = catchAsync(async (req, res) => {
-  const products = await productsServices.getProducts(req.tenant);
+  const since = req.query.since ?? null;
+  const products = await productsServices.getProducts(req.tenant, since);
   return res.json({ products });
 });
 
