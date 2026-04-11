@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const sanitize              = require('./middlewares/sanitize.middleware');
 const { extractTenant }     = require('./middlewares/tenant.middleware');
+const { subdomainResolver } = require('./middlewares/subdomainResolver.middleware');
 const ApiRoutes             = require('./routes');
 const errorHandlerRouter    = require('./routes/error.handler.routes');
 const swaggerUi             = require('swagger-ui-express');
@@ -70,6 +71,14 @@ app.get('/api/v1/health', (_req, res) => res.json({ status: 'ok', ts: Date.now()
 app.use('/api/v1/', (req, res, next) => {
   if (req.path === '/health') return next();
   limiter(req, res, next);
+});
+
+// Resolve tenant from subdomain (x-subdomain header or Host) → req.company
+// Excluye /tenants/validate y /health que son públicos y no necesitan contexto.
+app.use('/api/v1/', (req, res, next) => {
+  const PUBLIC_PATHS = ['/health', '/tenants/validate'];
+  if (PUBLIC_PATHS.some((p) => req.path.startsWith(p))) return next();
+  subdomainResolver(req, res, next);
 });
 
 // Inject tenant context (companyId, branchId, stationId) on every request
