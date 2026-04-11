@@ -7,6 +7,9 @@ const router = Router();
 
 router.get('/company-info', companyInfoController.getCompanyInfo);
 
+// Public — called by the frontend on every subdomain to gate the UI
+router.get('/tenants/validate', companyInfoController.validateTenant);
+
 router.put(
   '/company-info',
   authenticate,
