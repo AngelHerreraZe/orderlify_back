@@ -30,16 +30,28 @@ app.use(helmet());
 app.use(express.json());
 app.use(
   cors({
-    // Allow web origins from env, plus Electron renderer (origin === 'null')
+    // Allow web origins from env, plus Electron renderer (origin === 'null').
+    // ALLOWED_ORIGINS supports exact matches and wildcard patterns like
+    // "*.orderlify.net" so that every tenant subdomain is accepted.
     origin: (origin, cb) => {
-      const allowed = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173')
+      if (!origin || origin === 'null') return cb(null, true);
+
+      const patterns = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173')
         .split(',')
-        .map((o) => o.trim());
-      if (!origin || origin === 'null' || allowed.includes(origin)) {
-        cb(null, true);
-      } else {
-        cb(new Error('Not allowed by CORS'));
-      }
+        .map((o) => o.trim())
+        .filter(Boolean);
+
+      const isAllowed = patterns.some((pattern) => {
+        // Wildcard pattern: "https://*.orderlify.net"
+        if (pattern.includes('*')) {
+          const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace('\\*', '.+');
+          return new RegExp(`^${escaped}$`).test(origin);
+        }
+        return pattern === origin;
+      });
+
+      if (isAllowed) return cb(null, true);
+      cb(new Error(`CORS: origin '${origin}' not allowed`));
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: [
