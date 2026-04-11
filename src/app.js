@@ -4,12 +4,18 @@ const helmet = require('helmet');
 const hpp = require('hpp');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const sanitize              = require('./middlewares/sanitize.middleware');
-const { extractTenant }     = require('./middlewares/tenant.middleware');
-const ApiRoutes             = require('./routes');
-const errorHandlerRouter    = require('./routes/error.handler.routes');
-const swaggerUi             = require('swagger-ui-express');
-const swaggerDoc            = require('./swagger.json');
+
+const sanitize = require('./middlewares/sanitize.middleware');
+const { extractTenant } = require('./middlewares/tenant.middleware');
+const {
+  subdomainResolver,
+} = require('./middlewares/subdomainResolver.middleware');
+
+const ApiRoutes = require('./routes');
+const errorHandlerRouter = require('./routes/error.handler.routes');
+
+const swaggerUi = require('swagger-ui-express');
+const swaggerDoc = require('./swagger.json');
 
 const app = express();
 
@@ -25,57 +31,144 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
-app.use(helmet());
-app.use(express.json());
+/* =========================
+   🔐 CORS (FIX REAL)
+========================= */
 app.use(
   cors({
-    // Allow web origins from env, plus Electron renderer (origin === 'null').
-    // ALLOWED_ORIGINS supports exact matches and wildcard patterns like
-    // "*.orderlify.net" so that every tenant subdomain is accepted.
     origin: (origin, cb) => {
       if (!origin || origin === 'null') return cb(null, true);
 
-      const patterns = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173')
-        .split(',')
-        .map((o) => o.trim())
-        .filter(Boolean);
+      try {
+        const url = new URL(origin);
+        const hostname = url.hostname;
 
-      const isAllowed = patterns.some((pattern) => {
-        // Wildcard pattern: "https://*.orderlify.net"
-        if (pattern.includes('*')) {
-          const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace('\\*', '.+');
-          return new RegExp(`^${escaped}$`).test(origin);
-        }
-        return pattern === origin;
-      });
+        // Permitir dominio raíz
+        if (hostname === 'orderlify.net') return cb(null, true);
 
-      if (isAllowed) return cb(null, true);
-      cb(new Error(`CORS: origin '${origin}' not allowed`));
+        // Permitir TODOS los subdominios reales
+        if (hostname.endsWith('.orderlify.net')) return cb(null, true);
+
+        return cb(new Error(`CORS: origin '${origin}' not allowed`));
+      } catch (err) {
+        return cb(new Error(`CORS: invalid origin '${origin}'`));
+      }
     },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: [
-      'Content-Type', 'auth-token',
-      'x-company-id', 'x-branch-id', 'x-station-id', 'x-subdomain',
+      'Content-Type',
+      'auth-token',
+      'x-company-id',
+      'x-branch-id',
+      'x-station-id',
+      'x-subdomain',
     ],
   }),
 );
+
+/* =========================
+   🛡 Seguridad base
+========================= */
+app.use(helmet());
+app.use(express.json());
 app.use(sanitize);
 app.use(hpp());
 
-// ─── Health check (before rate limiter — used by Electron sync engine) ───────
-app.get('/api/v1/health', (_req, res) => res.json({ status: 'ok', ts: Date.now() }));
+/* =========================
+   📚 Docs
+========================= */
+app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
-// ─── Rate limiter (skip /health) ──────────────────────────────────────────────
+/* =========================
+   ❤️ Health check
+========================= */
+app.get('/api/v1/health', (_req, res) =>
+  res.json({ status: 'ok', ts: Date.now() }),
+);
+
+/* =========================
+   🚨 TENANT VALIDATION GLOBAL (FIX CLAVE)
+========================= */
+app.use(async (req, res, next) => {
+  try {
+    const PUBLIC_PATHS = [
+      '/api/v1/health',
+      '/api/v1/tenants/validate',
+      '/api/v1/docs',
+    ];
+
+    if (PUBLIC_PATHS.some((p) => req.path.startsWith(p))) {
+      return next();
+    }
+
+    // 🔥 FIX VERCEL
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
+
+    if (!host) {
+      return res.status(400).json({ error: 'Host inválido' });
+    }
+
+    const subdomain = host.split('.')[0];
+
+    // Evitar root domain
+    if (subdomain === 'orderlify') {
+      return next();
+    }
+
+    // 🔥 usar tu resolver existente
+    req.headers['x-subdomain'] = subdomain;
+
+    // Ejecutar tu lógica real
+    await new Promise((resolve, reject) => {
+      subdomainResolver(req, res, (err) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+
+    // 🔥 VALIDACIÓN REAL
+    if (!req.company) {
+      return res.status(404).json({
+        error: 'Empresa no encontrada',
+        subdomain,
+      });
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+/* =========================
+   🚦 Rate limiter
+========================= */
 app.use('/api/v1/', (req, res, next) => {
   if (req.path === '/health') return next();
   limiter(req, res, next);
 });
 
-// Inject tenant context (companyId, branchId, stationId) on every request
+/* =========================
+   🧠 Tenant context
+========================= */
 app.use('/api/v1/', extractTenant);
 
+/* =========================
+   🚀 Routes
+========================= */
 ApiRoutes(app);
+
+/* =========================
+   ❌ 404 GLOBAL (IMPORTANTE)
+========================= */
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found' });
+});
+
+/* =========================
+   💥 Error handler
+========================= */
 errorHandlerRouter(app);
 
 module.exports = app;
