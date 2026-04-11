@@ -7,9 +7,9 @@ exports.getCompanyInfo = catchAsync(async (req, res) => {
   return res.json({ companyInfo: info });
 });
 
-exports.validateTenant = catchAsync(async (req, res, next) => {
+exports.validateTenant = catchAsync(async (req, res) => {
   const subdomain = (req.query.subdomain ?? '').trim().toLowerCase();
-  if (!subdomain) return next(new AppError('subdomain requerido', 400));
+  if (!subdomain) return res.json({ valid: false, reason: 'missing_subdomain' });
 
   const result = await companyInfoServices.validateSubdomain(subdomain);
   return res.json(result);
