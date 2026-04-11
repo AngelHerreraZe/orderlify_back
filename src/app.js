@@ -5,15 +5,17 @@ const hpp = require('hpp');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
-const sanitize              = require('./middlewares/sanitize.middleware');
-const { extractTenant }     = require('./middlewares/tenant.middleware');
-const { subdomainResolver } = require('./middlewares/subdomainResolver.middleware');
+const sanitize = require('./middlewares/sanitize.middleware');
+const { extractTenant } = require('./middlewares/tenant.middleware');
+const {
+  subdomainResolver,
+} = require('./middlewares/subdomainResolver.middleware');
 
-const ApiRoutes             = require('./routes');
-const errorHandlerRouter    = require('./routes/error.handler.routes');
+const ApiRoutes = require('./routes');
+const errorHandlerRouter = require('./routes/error.handler.routes');
 
-const swaggerUi             = require('swagger-ui-express');
-const swaggerDoc            = require('./swagger.json');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDoc = require('./swagger.json');
 
 const app = express();
 
@@ -82,7 +84,7 @@ app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
    ❤️ Health check
 ========================= */
 app.get('/api/v1/health', (_req, res) =>
-  res.json({ status: 'ok', ts: Date.now() })
+  res.json({ status: 'ok', ts: Date.now() }),
 );
 
 /* =========================
@@ -93,7 +95,7 @@ app.use(async (req, res, next) => {
     const PUBLIC_PATHS = [
       '/api/v1/health',
       '/api/v1/tenants/validate',
-      '/api/v1/docs'
+      '/api/v1/docs',
     ];
 
     if (PUBLIC_PATHS.some((p) => req.path.startsWith(p))) {
@@ -101,9 +103,7 @@ app.use(async (req, res, next) => {
     }
 
     // 🔥 FIX VERCEL
-    const host =
-      req.headers['x-forwarded-host'] ||
-      req.headers.host;
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
 
     if (!host) {
       return res.status(400).json({ error: 'Host inválido' });
@@ -131,7 +131,7 @@ app.use(async (req, res, next) => {
     if (!req.company) {
       return res.status(404).json({
         error: 'Empresa no encontrada',
-        subdomain
+        subdomain,
       });
     }
 
@@ -153,6 +153,27 @@ app.use('/api/v1/', (req, res, next) => {
    🧠 Tenant context
 ========================= */
 app.use('/api/v1/', extractTenant);
+
+app.use((req, res, next) => {
+  const isApi = req.path.startsWith('/api');
+  const isLogin = req.path.startsWith('/login');
+
+  const acceptsHTML = req.headers.accept?.includes('text/html');
+
+  if (isApi || isLogin) return next();
+
+  if (!req.user) {
+    if (acceptsHTML) {
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+
+      return res.redirect(`https://${host}/login`);
+    }
+
+    return res.status(401).json({ error: 'No autenticado' });
+  }
+
+  next();
+});
 
 /* =========================
    🚀 Routes
