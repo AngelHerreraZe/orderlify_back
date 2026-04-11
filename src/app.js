@@ -166,12 +166,10 @@ app.use((req, res, next) => {
     if (acceptsHTML) {
       const host = req.headers['x-forwarded-host'] || req.headers.host;
 
-      return res.redirect(`https://${host}/login`);
+      return res.redirect(`https://${req.headers.host}/login`);
     }
-
     return res.status(401).json({ error: 'No autenticado' });
   }
-
   next();
 });
 
