@@ -109,8 +109,7 @@ app.use(async (req, res, next) => {
       return res.status(400).json({ error: 'Host inválido' });
     }
 
-    const subdomain =
-      req.headers['x-subdomain'] || (req.headers.host || '').split('.')[0];
+    const subdomain = host.split('.')[0];
 
     // Evitar root domain
     if (subdomain === 'orderlify') {
