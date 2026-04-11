@@ -60,7 +60,7 @@ const initSocket = (server) => {
           if (pattern.includes('*')) {
             const re = pattern
               .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
-              .replace('\\*', '.+');
+              .replace(/\*/g, '.+');
             return new RegExp(`^${re}$`).test(origin);
           }
           return pattern === origin;

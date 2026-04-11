@@ -45,7 +45,7 @@ app.use(
       const isAllowed = patterns.some((pattern) => {
         // Wildcard pattern: "https://*.orderlify.net"
         if (pattern.includes('*')) {
-          const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace('\\*', '.+');
+          const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.+');
           return new RegExp(`^${escaped}$`).test(origin);
         }
         return pattern === origin;
