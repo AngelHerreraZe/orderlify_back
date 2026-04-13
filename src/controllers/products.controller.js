@@ -3,9 +3,9 @@ const catchAsync      = require('../utils/catchAsync');
 const productsServices = require('../services/products.services');
 
 exports.createProduct = catchAsync(async (req, res) => {
-  const { name, description, price, categoryId } = req.body;
+  const { name, description, price, cost, categoryId } = req.body;
   const companyId = req.tenant?.companyId ?? null;
-  const product = await productsServices.createProduct(name, description, price, categoryId, companyId);
+  const product = await productsServices.createProduct(name, description, price, cost ?? null, categoryId, companyId);
   return res.status(201).json({ product });
 });
 
@@ -23,8 +23,8 @@ exports.getProductById = catchAsync(async (req, res) => {
 
 exports.updateProduct = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const { name, description, price, available, categoryId } = req.body;
-  await productsServices.updateProduct(id, name, description, price, available, categoryId);
+  const { name, description, price, cost, available, categoryId } = req.body;
+  await productsServices.updateProduct(id, name, description, price, cost ?? null, available, categoryId);
   return res.sendStatus(204);
 });
 

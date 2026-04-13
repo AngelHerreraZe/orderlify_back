@@ -51,6 +51,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM('Pendiente', 'Preparando', 'Completado', 'Cancelado'),
         defaultValue: 'Pendiente',
       },
+      serviceType: {
+        type: DataTypes.ENUM('mesa', 'pickup', 'delivery'),
+        field: 'service_type',
+        allowNull: true,
+        defaultValue: null,
+      },
       total: {
         type: DataTypes.FLOAT,
         allowNull: false,

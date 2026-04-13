@@ -1,18 +1,20 @@
 'use strict';
-const userRoutes        = require('./users.routes');
-const rolesRoutes       = require('./roles.routes');
-const productsRoutes    = require('./products.routes');
-const tablesRoutes      = require('./tables.routes');
-const ordersRoutes      = require('./orders.routes');
-const paymentsRoutes    = require('./payments.route');
-const adminRoutes       = require('./admin.routes');
-const companyInfoRoutes = require('./companyInfo.routes');
-const branchesRoutes    = require('./branches.routes');
+const userRoutes          = require('./users.routes');
+const rolesRoutes         = require('./roles.routes');
+const productsRoutes      = require('./products.routes');
+const tablesRoutes        = require('./tables.routes');
+const ordersRoutes        = require('./orders.routes');
+const paymentsRoutes      = require('./payments.route');
+const adminRoutes         = require('./admin.routes');
+const companyInfoRoutes   = require('./companyInfo.routes');
+const branchesRoutes      = require('./branches.routes');
 const stationsRoutes      = require('./stations.routes');
 const cashRegisterRoutes  = require('./cashRegister.routes');
 const usersSyncRoutes     = require('./usersSync.routes');
+const registrationRoutes  = require('./registration.routes');
 
 const ApiRoutes = (app) => {
+  app.use('/api/v1/', registrationRoutes);
   app.use('/api/v1/', userRoutes);
   app.use('/api/v1/', rolesRoutes);
   app.use('/api/v1/', productsRoutes);

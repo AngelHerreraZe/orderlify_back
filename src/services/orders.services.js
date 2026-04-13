@@ -23,15 +23,18 @@ const ORDER_INCLUDE = [
 ];
 
 class ordersServices {
-  static async createOrder(tableId, userId, status, total, tenant = {}) {
+  static async createOrder(tableId, userId, status, total, tenant = {}, serviceType = null) {
     const { companyId = null, branchId = null, stationId = null } = tenant;
-    const order = await db.Orders.create({ tableId, userId, status, total, companyId, branchId, stationId });
-    return order;
+    const order = await db.Orders.create({ tableId, userId, status, total, companyId, branchId, stationId, serviceType });
+    const data = order.toJSON();
+    delete data.serviceType;
+    return data;
   }
 
   static async getOrders(tenant = {}) {
     const orders = await db.Orders.findAll({
       where: tenantWhere(tenant),
+      attributes: { exclude: ['serviceType'] },
       include: ORDER_INCLUDE,
     });
     return orders;
@@ -40,6 +43,7 @@ class ordersServices {
   static async getOrderById(id) {
     const order = await db.Orders.findOne({
       where: { id },
+      attributes: { exclude: ['serviceType'] },
       include: ORDER_INCLUDE,
     });
     return order;

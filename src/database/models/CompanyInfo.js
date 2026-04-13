@@ -42,10 +42,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL(11, 8),
       allowNull: true,
     },
-    slogan: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
   }, {
     sequelize,
     tableName: 'company_info',

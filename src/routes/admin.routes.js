@@ -26,11 +26,12 @@ router.get(
   adminController.getReports
 );
 
+// GET /admin/reports/pdf?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
 router.get(
-  '/admin/reports/excel/:startDate/:endDate',
+  '/admin/reports/pdf',
   authenticate,
   allowRoles('Admin', 'Manager'),
-  adminController.genExcel
+  adminController.genPdf
 );
 
 module.exports = router;

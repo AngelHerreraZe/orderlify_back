@@ -16,9 +16,9 @@ exports.validateTenant = catchAsync(async (req, res) => {
 });
 
 exports.updateCompanyInfo = catchAsync(async (req, res) => {
-  const { nombre, razonSocial, telefono, email, direccion, latitud, longitud, slogan } = req.body;
+  const { nombre, razonSocial, telefono, email, direccion, latitud, longitud } = req.body;
   const info = await companyInfoServices.updateCompanyInfo({
-    nombre, razonSocial, telefono, email, direccion, latitud, longitud, slogan,
+    nombre, razonSocial, telefono, email, direccion, latitud, longitud,
   });
   return res.json({ companyInfo: info });
 });

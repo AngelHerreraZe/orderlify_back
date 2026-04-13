@@ -76,7 +76,7 @@ app.use('/api/v1/', (req, res, next) => {
 // Resolve tenant from subdomain (x-subdomain header or Host) → req.company
 // Excluye /tenants/validate y /health que son públicos y no necesitan contexto.
 app.use('/api/v1/', (req, res, next) => {
-  const PUBLIC_PATHS = ['/health', '/tenants/validate'];
+  const PUBLIC_PATHS = ['/health', '/tenants/validate', '/companies/register'];
   if (PUBLIC_PATHS.some((p) => req.path.startsWith(p))) return next();
   subdomainResolver(req, res, next);
 });

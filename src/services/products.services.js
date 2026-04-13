@@ -5,9 +5,11 @@ const db = require('../database/models/index');
 class productsServices {
   // ─── Products ──────────────────────────────────────────────────────────────
 
-  static async createProduct(name, description, price, categoryId, companyId = null) {
-    const product = await db.Products.create({ name, description, price, categoryId, companyId });
-    return product;
+  static async createProduct(name, description, price, cost = null, categoryId, companyId = null) {
+    const product = await db.Products.create({ name, description, price, cost, categoryId, companyId });
+    const data = product.toJSON();
+    delete data.cost;
+    return data;
   }
 
   /**
@@ -33,7 +35,7 @@ class productsServices {
             model: db.Products,
             where: Object.keys(productWhere).length ? productWhere : undefined,
             include: [{ model: db.Categories, attributes: { exclude: ['createdAt', 'updatedAt'] } }],
-            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            attributes: { exclude: ['createdAt', 'updatedAt', 'cost'] },
           },
         ],
         order: [[{ model: db.Products }, 'id', 'ASC']],
@@ -46,6 +48,7 @@ class productsServices {
           p.price = bp.price;
         }
         p.branchAvailable = bp.available;
+        delete p.cost;
         return p;
       });
     }
@@ -57,7 +60,7 @@ class productsServices {
 
     const products = await db.Products.findAll({
       where,
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
+      attributes: { exclude: ['createdAt', 'updatedAt', 'cost'] },
       include: [{ model: db.Categories, attributes: { exclude: ['createdAt', 'updatedAt'] } }],
       order: [['id', 'ASC']],
     });
@@ -68,13 +71,13 @@ class productsServices {
     const product = await db.Products.findOne({
       where: { id },
       include: [{ model: db.Categories, attributes: { exclude: ['createdAt', 'updatedAt'] } }],
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
+      attributes: { exclude: ['createdAt', 'updatedAt', 'cost'] },
     });
     return product;
   }
 
-  static async updateProduct(id, name, description, price, avaliable, categoryId) {
-    await db.Products.update({ name, description, price, avaliable, categoryId }, { where: { id } });
+  static async updateProduct(id, name, description, price, cost, avaliable, categoryId) {
+    await db.Products.update({ name, description, price, cost, avaliable, categoryId }, { where: { id } });
   }
 
   static async deleteProduct(id) {

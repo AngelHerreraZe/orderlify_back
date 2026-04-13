@@ -4,13 +4,39 @@ const AuthServices = require('../services/auth.services');
 const AppError = require('../utils/appError');
 const bcrypt = require('bcrypt');
 
-exports.create = catchAsync(async (req, res) => {
-  const { username, password, name, lastname } = req.body;
+exports.create = catchAsync(async (req, res, next) => {
+  const { username, password, name, lastname, roleId } = req.body;
+  const creatorRole = req.user.role;
+
+  // Regla 8 & 9: Manager sólo puede crear roles que no sean Admin ni Manager.
+  // Si se envía un roleId, validamos el rol destino.
+  if (creatorRole === 'Manager' && roleId) {
+    const db = require('../database/models/index');
+    const targetRole = await db.Roles.findByPk(roleId);
+    if (targetRole && (targetRole.name === 'Admin' || targetRole.name === 'Manager')) {
+      return next(
+        new AppError('Un Manager no puede crear usuarios con rol Admin o Manager', 403),
+      );
+    }
+  }
+
+  // Regla 6: No se pueden crear Admins extra por esta vía (solo en registro inicial).
+  if (roleId) {
+    const db = require('../database/models/index');
+    const targetRole = await db.Roles.findByPk(roleId);
+    if (targetRole && targetRole.name === 'Admin') {
+      return next(
+        new AppError('No se puede crear un usuario Admin por esta vía. El Admin se crea al registrar la empresa.', 403),
+      );
+    }
+  }
+
   const user = await userServices.create({
     username,
     password,
     name,
     lastname,
+    companyId: req.user.companyId,
   });
   return res.status(201).json({
     status: 'success',
@@ -79,15 +105,55 @@ exports.getUserbyId = catchAsync(async (req, res) => {
   return res.json({ user });
 });
 
-exports.updateUserInfo = catchAsync(async (req, res) => {
+exports.updateUserInfo = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { name, lastname, active } = req.body;
+
+  // Regla 7: El usuario Admin no puede modificarse por esta vía (solo panel de control).
+  const db = require('../database/models/index');
+  const targetUserRole = await db.UsersRoles.findOne({
+    where: { userId: id, isPrimary: true },
+    include: [{ model: db.Roles }],
+  });
+  if (targetUserRole?.Role?.name === 'Admin') {
+    return next(
+      new AppError('El usuario Administrador solo puede modificarse desde el panel de control.', 403),
+    );
+  }
+
+  // Regla 9: Manager no puede editar usuarios Manager
+  if (req.user.role === 'Manager' && targetUserRole?.Role?.name === 'Manager') {
+    return next(
+      new AppError('Un Manager no puede modificar a otro Manager.', 403),
+    );
+  }
+
   await userServices.updateUserInfo(id, name, lastname, active);
   return res.sendStatus(204);
 });
 
-exports.deleteUser = catchAsync(async (req, res) => {
+exports.deleteUser = catchAsync(async (req, res, next) => {
   const { id } = req.params;
+
+  // Regla 7: El usuario Admin no puede eliminarse por esta vía (solo panel de control).
+  const db = require('../database/models/index');
+  const targetUserRole = await db.UsersRoles.findOne({
+    where: { userId: id, isPrimary: true },
+    include: [{ model: db.Roles }],
+  });
+  if (targetUserRole?.Role?.name === 'Admin') {
+    return next(
+      new AppError('El usuario Administrador solo puede eliminarse desde el panel de control.', 403),
+    );
+  }
+
+  // Regla 9: Manager no puede eliminar a otro Manager
+  if (req.user.role === 'Manager' && targetUserRole?.Role?.name === 'Manager') {
+    return next(
+      new AppError('Un Manager no puede eliminar a otro Manager.', 403),
+    );
+  }
+
   await userServices.deleteUser(id);
   return res.sendStatus(204);
 });

@@ -181,17 +181,26 @@ class adminServices {
   }
 
   static async genExcel(startDate, endDate, tenant = {}) {
-    const orders = await db.Orders.findAll({
-      where: {
-        ...tenantWhere(tenant),
-        createdAt: { [Op.between]: [new Date(startDate), new Date(endDate)] },
-      },
-      include: [
-        { model: db.OrdersItems, include: [{ model: db.Products, include: [{ model: db.Categories }] }] },
-        { model: db.User, as: 'user', attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
-      ],
-    });
-    return orders;
+    const [orders, company, branch] = await Promise.all([
+      db.Orders.findAll({
+        where: {
+          ...tenantWhere(tenant),
+          createdAt: { [Op.between]: [new Date(startDate), new Date(endDate)] },
+        },
+        include: [
+          { model: db.OrdersItems, include: [{ model: db.Products, include: [{ model: db.Categories }] }] },
+          { model: db.User, as: 'user', attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
+        ],
+      }),
+      tenant.companyId ? db.Company.findByPk(tenant.companyId, { attributes: ['name'] }) : null,
+      tenant.branchId  ? db.Branch.findByPk(tenant.branchId,   { attributes: ['name'] }) : null,
+    ]);
+
+    return {
+      orders,
+      companyName: company?.name || 'company',
+      branchName:  branch?.name  || 'branch',
+    };
   }
 }
 

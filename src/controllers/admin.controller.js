@@ -1,9 +1,8 @@
 const catchAsync = require('../utils/catchAsync');
 const adminServices = require('../services/admin.services');
-const { generateOrdersReport } = require('../services/excel.service');
+const ReportService = require('../services/report.service');
+const { generatePdf } = require('../services/pdf.service');
 const AppError = require('../utils/appError');
-const fs = require('fs');
-const path = require('path');
 
 exports.getOverView = catchAsync(async (req, res) => {
   const dailyOverview = await adminServices.dailyOverview(req.tenant);
@@ -21,14 +20,34 @@ exports.getReports = catchAsync(async (req, res) => {
   return res.json({ report });
 });
 
-exports.genExcel = catchAsync(async (req, res, next) => {
-  const { startDate, endDate } = req.params;
-  const totalSales = await adminServices.genExcel(startDate, endDate, req.tenant);
-  const workbook = await generateOrdersReport(totalSales);
-  const filePath = path.join(__dirname, '../temp/reporte_ventas.xlsx');
-  await workbook.xlsx.writeFile(filePath);
-  res.download(filePath, 'reporte_ventas.xlsx', (err) => {
-    fs.unlink(filePath, () => {});
-    if (err) next(new AppError('Error sending the file', 500));
+exports.genPdf = catchAsync(async (req, res, next) => {
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    return next(new AppError('Los parámetros startDate y endDate son requeridos', 400));
+  }
+
+  // Validate date format (YYYY-MM-DD)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+    return next(new AppError('El formato de fecha debe ser YYYY-MM-DD', 400));
+  }
+
+  if (new Date(startDate) > new Date(endDate)) {
+    return next(new AppError('startDate no puede ser mayor que endDate', 400));
+  }
+
+  const reportData = await ReportService.generatePdfData(startDate, endDate, req.tenant);
+  const pdfBuffer = await generatePdf(reportData);
+
+  const sanitize = (str) => (str || 'reporte').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+  const fileName = `${sanitize(reportData.company.name)}-reporte-${startDate}-${endDate}.pdf`;
+
+  res.set({
+    'Content-Type': 'application/pdf',
+    'Content-Disposition': `attachment; filename="${fileName}"`,
+    'Content-Length': pdfBuffer.length,
   });
+
+  return res.send(pdfBuffer);
 });

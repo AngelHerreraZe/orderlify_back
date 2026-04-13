@@ -43,10 +43,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(255),
         allowNull: true,
       },
-      slogan: {
-        type: DataTypes.STRING(255),
-        allowNull: true,
-      },
       logoUrl: {
         type: DataTypes.TEXT,
         field: 'logo_url',
@@ -84,7 +80,9 @@ module.exports = (sequelize, DataTypes) => {
       modelName: 'Company',
       hooks: {
         beforeCreate: async (company) => {
-          if (!company.serial) {
+          // Plan básico (uniestacion) no recibe serial — queda NULL.
+          // Los planes superiores generan uno automáticamente si no se proporcionó.
+          if (!company.serial && company.plan !== 'uniestacion') {
             company.serial = await generateUniqueSerial(Company);
           }
         },

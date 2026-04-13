@@ -12,6 +12,12 @@ router
   .put(rolesCotroler.updateRole)
   .delete(rolesCotroler.deleteRole);
 
-router.post('/users/:userId/roles/:roleId', rolesCotroler.assignRole);
+// Solo Admin o Manager pueden asignar roles; Manager no puede asignar Admin/Manager (validado en controller)
+router.post(
+  '/users/:userId/roles/:roleId',
+  authenticate,
+  allowRoles('Admin', 'Manager'),
+  rolesCotroler.assignRole,
+);
 
 module.exports = router;

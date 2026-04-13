@@ -15,6 +15,8 @@ router.get(
 
 router.post('/auth/login', userController.userLogin);
 
+// Solo Admin puede crear usuarios (incl. Managers).
+// El controller verifica además que Manager no pueda asignar rol Admin/Manager.
 router.post(
   '/auth/register',
   createUserValidator,
