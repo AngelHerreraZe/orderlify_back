@@ -1,6 +1,7 @@
 const catchAsync = require('../utils/catchAsync');
 const adminServices = require('../services/admin.services');
 const ReportService = require('../services/report.service');
+const CorporateService = require('../services/corporate.service');
 const { generatePdf } = require('../services/pdf.service');
 const AppError = require('../utils/appError');
 
@@ -50,4 +51,29 @@ exports.genPdf = catchAsync(async (req, res, next) => {
   });
 
   return res.send(pdfBuffer);
+});
+
+exports.getCorporateSummary = catchAsync(async (req, res, next) => {
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    return next(new AppError('Los parámetros startDate y endDate son requeridos', 400));
+  }
+
+  // Validate date format (YYYY-MM-DD)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+    return next(new AppError('El formato de fecha debe ser YYYY-MM-DD', 400));
+  }
+
+  if (new Date(startDate) > new Date(endDate)) {
+    return next(new AppError('startDate no puede ser mayor que endDate', 400));
+  }
+
+  try {
+    const summary = await CorporateService.getCorporateSummary(req.tenant, startDate, endDate);
+    return res.json(summary);
+  } catch (err) {
+    return next(new AppError(err.message || 'Error al generar resumen corporativo', 500));
+  }
 });

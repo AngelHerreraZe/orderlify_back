@@ -34,4 +34,11 @@ router.get(
   adminController.genPdf
 );
 
+router.get(
+  '/admin/corporate/summary',
+  authenticate,
+  allowRoles('Admin', 'Manager'),
+  adminController.getCorporateSummary
+);
+
 module.exports = router;
