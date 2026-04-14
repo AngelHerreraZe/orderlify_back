@@ -69,9 +69,17 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
       },
       plan: {
-        type: DataTypes.ENUM('uniestacion', 'unisucursal', 'multisucursal'),
-        defaultValue: 'unisucursal',
+        type: DataTypes.ENUM('free', 'basic', 'pro', 'business'),
+        defaultValue: 'free',
         allowNull: false,
+      },
+      latitud: {
+        type: DataTypes.DECIMAL(10, 8),
+        allowNull: true,
+      },
+      longitud: {
+        type: DataTypes.DECIMAL(11, 8),
+        allowNull: true,
       },
     },
     {
@@ -80,9 +88,9 @@ module.exports = (sequelize, DataTypes) => {
       modelName: 'Company',
       hooks: {
         beforeCreate: async (company) => {
-          // Plan básico (uniestacion) no recibe serial — queda NULL.
-          // Los planes superiores generan uno automáticamente si no se proporcionó.
-          if (!company.serial && company.plan !== 'uniestacion') {
+          // Plan free no recibe serial — queda NULL.
+          // Los planes de pago generan uno automáticamente si no se proporcionó.
+          if (!company.serial && company.plan !== 'free') {
             company.serial = await generateUniqueSerial(Company);
           }
         },

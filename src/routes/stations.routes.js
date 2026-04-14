@@ -6,7 +6,8 @@ const { allowRoles }      = require('../middlewares/role.middleware');
 
 const router = Router();
 
-router.use(authenticate);
+// Path-scoped so public routes in other routers are not intercepted.
+router.use('/branches', authenticate);
 
 router.get('/branches/:branchId/stations',        allowRoles('Admin', 'Manager'), stationsController.getStations);
 router.post('/branches/:branchId/stations',       allowRoles('Admin'),             stationsController.createStation);

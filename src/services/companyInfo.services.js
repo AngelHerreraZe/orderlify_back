@@ -1,10 +1,16 @@
+'use strict';
 const db = require('../database/models/index');
+
+// Columnas públicas de Company que expone este servicio
+const COMPANY_ATTRS = [
+  'id', 'name', 'legalName', 'phone', 'email',
+  'address', 'logoUrl', 'latitud', 'longitud',
+];
 
 class companyInfoServices {
   /**
    * Validate whether a subdomain corresponds to an existing, active company.
-   * Returns { valid, reason, name } — reason is one of:
-   *   'ok' | 'not_found' | 'suspended' | 'canceled'
+   * Returns { valid, reason, name }
    */
   static async validateSubdomain(subdomain) {
     const company = await db.Company.findOne({
@@ -12,35 +18,30 @@ class companyInfoServices {
       attributes: ['id', 'name', 'status'],
     });
 
-    if (!company) return { valid: false, reason: 'not_found' };
-    if (company.status === 'suspended') return { valid: false, reason: 'suspended', name: company.name };
-    if (company.status === 'canceled')  return { valid: false, reason: 'canceled',  name: company.name };
+    if (!company)                        return { valid: false, reason: 'not_found' };
+    if (company.status === 'suspended')  return { valid: false, reason: 'suspended', name: company.name };
+    if (company.status === 'canceled')   return { valid: false, reason: 'canceled',  name: company.name };
 
     return { valid: true, reason: 'ok', name: company.name };
   }
 
-
-  static async getCompanyInfo() {
-    try {
-      const info = await db.CompanyInfo.findOne();
-      return info;
-    } catch (error) {
-      throw error;
-    }
+  /**
+   * Get company info for a given companyId.
+   * Returns null if not found or no companyId provided.
+   */
+  static async getCompanyInfo(companyId) {
+    if (!companyId) return null;
+    const company = await db.Company.findByPk(companyId, { attributes: COMPANY_ATTRS });
+    return company ?? null;
   }
 
-  static async updateCompanyInfo(data) {
-    try {
-      const info = await db.CompanyInfo.findOne();
-      if (info) {
-        await info.update(data);
-        return info;
-      }
-      const newInfo = await db.CompanyInfo.create(data);
-      return newInfo;
-    } catch (error) {
-      throw error;
-    }
+  /**
+   * Partial-update company info fields. Only touches the provided keys.
+   */
+  static async updateCompanyInfo(companyId, data) {
+    if (!companyId) throw new Error('companyId requerido');
+    await db.Company.update(data, { where: { id: companyId } });
+    return db.Company.findByPk(companyId, { attributes: COMPANY_ATTRS });
   }
 }
 

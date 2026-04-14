@@ -4,7 +4,7 @@ const paymentsServices = require('../services/payments.services');
 
 exports.registerPayment = catchAsync(async (req, res) => {
   const { orderId, amount, method, receivedAmount } = req.body;
-  const payment = await paymentsServices.registerPayment(orderId, amount, method, receivedAmount, req.tenant);
+  const payment = await paymentsServices.registerPayment(orderId, amount, method, receivedAmount);
   return res.status(201).json({ payment });
 });
 

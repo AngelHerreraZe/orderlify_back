@@ -3,7 +3,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { registerCompany } = require('../services/registration.service');
 
-const VALID_PLANS = ['uniestacion', 'unisucursal', 'multisucursal'];
+const VALID_PLANS = ['free', 'basic', 'pro', 'business', 'uniestacion', 'unisucursal', 'multisucursal'];
 const SUBDOMAIN_RE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
 exports.register = catchAsync(async (req, res, next) => {
@@ -38,7 +38,7 @@ exports.register = catchAsync(async (req, res, next) => {
     email: email.trim().toLowerCase(),
     address: address?.trim() || null,
     subdomain: subdomain.trim().toLowerCase(),
-    plan: plan || 'unisucursal',
+    plan: plan || 'free',
   });
 
   return res.status(201).json({

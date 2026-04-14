@@ -4,9 +4,7 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Payments extends Model {
     static associate(models) {
-      Payments.belongsTo(models.Orders,  { foreignKey: 'orderId' });
-      Payments.belongsTo(models.Company, { foreignKey: 'companyId', as: 'company' });
-      Payments.belongsTo(models.Branch,  { foreignKey: 'branchId',  as: 'branch'  });
+      Payments.belongsTo(models.Orders, { foreignKey: 'orderId' });
     }
   }
 
@@ -34,16 +32,6 @@ module.exports = (sequelize, DataTypes) => {
       paidAt: {
         type: DataTypes.DATE,
         allowNull: false,
-      },
-      companyId: {
-        type: DataTypes.INTEGER,
-        field: 'company_id',
-        allowNull: true,
-      },
-      branchId: {
-        type: DataTypes.INTEGER,
-        field: 'branch_id',
-        allowNull: true,
       },
       receivedAmount: {
         type: DataTypes.FLOAT,

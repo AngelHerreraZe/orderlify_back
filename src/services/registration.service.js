@@ -72,7 +72,7 @@ async function registerCompany(data) {
         email,
         address: address || null,
         subdomain: subdomain.toLowerCase(),
-        plan: plan || 'unisucursal',
+        plan: plan || 'free',
         active: true,
         status: 'active',
       },

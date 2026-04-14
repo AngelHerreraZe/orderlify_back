@@ -4,9 +4,8 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class CashRegister extends Model {
     static associate(models) {
-      CashRegister.belongsTo(models.User,    { foreignKey: 'openedBy',  as: 'opener' });
-      CashRegister.belongsTo(models.Company, { foreignKey: 'companyId', as: 'company' });
-      CashRegister.belongsTo(models.Branch,  { foreignKey: 'branchId',  as: 'branch' });
+      CashRegister.belongsTo(models.User,   { foreignKey: 'openedBy', as: 'opener' });
+      CashRegister.belongsTo(models.Branch, { foreignKey: 'branchId', as: 'branch' });
     }
   }
 
@@ -66,11 +65,6 @@ module.exports = (sequelize, DataTypes) => {
       openedBy: {
         type: DataTypes.INTEGER,
         field: 'opened_by',
-        allowNull: true,
-      },
-      companyId: {
-        type: DataTypes.INTEGER,
-        field: 'company_id',
         allowNull: true,
       },
       branchId: {

@@ -7,8 +7,9 @@ const { extractTenant }  = require('../middlewares/tenant.middleware');
 
 const router = Router();
 
-// All branch routes require authentication + tenant header extraction
-router.use(authenticate, extractTenant);
+// All branch routes require authentication + tenant header extraction.
+// Path-scoped so public routes in other routers are not intercepted.
+router.use('/branches', authenticate, extractTenant);
 
 // Auto-detect context (all authenticated users need this on login)
 router.get('/branches/resolve-context', branchesController.resolveContext);

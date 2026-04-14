@@ -18,14 +18,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
       },
       name: {
-        type: DataTypes.ENUM(
-          'Entrada',
-          'Plato Fuerte',
-          'Postre',
-          'Bebidas sin alcohol',
-          'Bebidas con alcohol',
-          'Infantil'
-        ),
+        type: DataTypes.STRING(100),
         allowNull: false,
       },
       companyId: {
