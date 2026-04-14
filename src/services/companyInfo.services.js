@@ -4,7 +4,7 @@ const db = require('../database/models/index');
 // Columnas públicas de Company que expone este servicio
 const COMPANY_ATTRS = [
   'id', 'name', 'legalName', 'phone', 'email',
-  'address', 'logoUrl', 'latitud', 'longitud',
+  'address', 'logoUrl', 'latitud', 'longitud', 'plan', 'status',
 ];
 
 class companyInfoServices {
