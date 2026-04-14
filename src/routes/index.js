@@ -12,6 +12,7 @@ const stationsRoutes      = require('./stations.routes');
 const cashRegisterRoutes  = require('./cashRegister.routes');
 const usersSyncRoutes     = require('./usersSync.routes');
 const registrationRoutes  = require('./registration.routes');
+const backofficeRoutes    = require('../backoffice/routes/backoffice.routes');
 
 const ApiRoutes = (app) => {
   app.use('/api/v1/', registrationRoutes);
@@ -27,6 +28,7 @@ const ApiRoutes = (app) => {
   app.use('/api/v1/', stationsRoutes);
   app.use('/api/v1/', cashRegisterRoutes);
   app.use('/api/v1/', usersSyncRoutes);
+  app.use('/api/v1/backoffice', backofficeRoutes);
 };
 
 module.exports = ApiRoutes;
