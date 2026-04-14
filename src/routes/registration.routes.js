@@ -26,14 +26,8 @@ router.post('/payments/create-payment-intent', async (req, res) => {
 
   const amount = PLAN_PRICES[plan][billing];
 
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  if (!secretKey) {
-    console.error('[Stripe] STRIPE_SECRET_KEY is not set in environment variables');
-    return res.status(500).json({ message: 'Configuración de pagos incompleta en el servidor.' });
-  }
-
   try {
-    const stripe = require('stripe')(secretKey);
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     const intent = await stripe.paymentIntents.create({
       amount,
       currency: 'mxn',
@@ -42,7 +36,7 @@ router.post('/payments/create-payment-intent', async (req, res) => {
     });
     return res.json({ clientSecret: intent.client_secret, amountMXN: amount / 100 });
   } catch (err) {
-    console.error('[Stripe] create intent error:', err.message, err.type ?? '');
+    console.error('[Stripe] create intent error:', err.message);
     return res.status(500).json({ message: 'No se pudo iniciar el pago. Intenta de nuevo.' });
   }
 });
