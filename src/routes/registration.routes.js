@@ -8,12 +8,19 @@ const router = Router();
 router.post('/companies/register', registrationController.register);
 
 // ── Stripe: crear PaymentIntent para planes de pago ─────────────────────────
+/* PAYPAL CHANGE: referencia del catálogo antiguo de Stripe.
 const PLAN_PRICES = {
   basic:    { monthly: 699 * 100,  annual: 399 * 12 * 100  },
   pro:      { monthly: 1499 * 100, annual: 899 * 12 * 100  },
   business: { monthly: 3499 * 100, annual: 1999 * 12 * 100 },
 };
+*/
 
+router.post('/payments/stripe/create-subscription', registrationController.createStripeSubscription);
+// PAYPAL CHANGE: Nuevos endpoints públicos para crear y capturar órdenes PayPal.
+router.post('/payments/paypal/plan-id', registrationController.getPaypalSubscriptionPlan);
+router.post('/payments/paypal/verify-subscription', registrationController.verifyPaypalSubscription);
+/* PAYPAL CHANGE: el bloque legacy de Stripe se deja desactivado para ubicar rápido el cambio.
 router.post('/payments/create-payment-intent', async (req, res) => {
   const { plan, billing = 'monthly' } = req.body;
 
@@ -40,5 +47,6 @@ router.post('/payments/create-payment-intent', async (req, res) => {
     return res.status(500).json({ message: 'No se pudo iniciar el pago. Intenta de nuevo.' });
   }
 });
+*/
 
 module.exports = router;
