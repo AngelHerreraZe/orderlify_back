@@ -3,7 +3,8 @@ const crypto = require('crypto');
 const db = require('../database/models/index');
 const { sendWelcomeEmail } = require('../utils/email.service');
 
-const ALPHANUM = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const ALPHANUM =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 // PAYPAL CHANGE: Catálogo centralizado de precios compartido entre Stripe y PayPal.
 const PLAN_PRICES = {
   basic: { monthly: 699 * 100, annual: 399 * 12 * 100 },
@@ -13,8 +14,8 @@ const PLAN_PRICES = {
 // PAYPAL CHANGE: Configuración de PayPal vía variables de entorno para no hardcodear llaves.
 const PAYPAL_API_BASE =
   process.env.PAYPAL_ENV === 'live'
-    ? 'https://api-m.paypal.com'
-    : 'https://api-m.sandbox.paypal.com';
+    ? 'https://www.paypal.com/sdk/js'
+    : 'https://www.sandbox.paypal.com/sdk/js';
 const PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || 'MXN';
 const PAYPAL_BRAND_NAME = process.env.PAYPAL_BRAND_NAME || 'Orderlify';
 // PAYPAL CHANGE: Price IDs y Plan IDs para suscripciones reales mensual/anual.
@@ -63,13 +64,13 @@ function generatePassword() {
 function getPlanAmount(plan, billing = 'monthly') {
   if (!PLAN_PRICES[plan]) {
     const err = new Error('Plan inválido.');
-    err.status = 400;
+    err.statusCode = 400;
     throw err;
   }
 
   if (!['monthly', 'annual'].includes(billing)) {
     const err = new Error('Ciclo de facturación inválido.');
-    err.status = 400;
+    err.statusCode = 400;
     throw err;
   }
 
@@ -83,13 +84,23 @@ function getGatewayPlanId(provider, plan, billing = 'monthly') {
   const catalog = provider === 'stripe' ? STRIPE_PRICE_IDS : PAYPAL_PLAN_IDS;
   const planId = catalog?.[plan]?.[billing];
 
+  // Log para facilitar diagnóstico en desarrollo — se ve en la consola del servidor.
   if (!planId) {
+    const envKey =
+      provider === 'stripe'
+        ? `STRIPE_PRICE_${plan.toUpperCase()}_${billing.toUpperCase()}`
+        : `PAYPAL_PLAN_${plan.toUpperCase()}_${billing.toUpperCase()}`;
+    console.error(
+      `[payment config] Variable de entorno faltante o vacía: ${envKey}. ` +
+        `Revisa tu archivo .env y asegúrate de que el ID exista en el ambiente correcto ` +
+        `(${provider === 'paypal' ? process.env.PAYPAL_ENV || 'sandbox' : 'stripe'}).`,
+    );
     const err = new Error(
       provider === 'stripe'
-        ? 'Falta configurar el Price ID de Stripe para este plan.'
-        : 'Falta configurar el Plan ID de PayPal para este plan.',
+        ? `Falta configurar el Price ID de Stripe para el plan "${plan}" (${billing}). Revisa las variables de entorno del servidor.`
+        : `Falta configurar el Plan ID de PayPal para el plan "${plan}" (${billing}). Revisa las variables de entorno del servidor.`,
     );
-    err.status = 500;
+    err.statusCode = 500;
     throw err;
   }
 
@@ -100,7 +111,7 @@ function getGatewayPlanId(provider, plan, billing = 'monthly') {
 async function createStripeSubscription({ plan, billing = 'monthly' }) {
   if (!process.env.STRIPE_SECRET_KEY) {
     const err = new Error('Stripe no está configurado en el servidor.');
-    err.status = 500;
+    err.statusCode = 500;
     throw err;
   }
 
@@ -109,7 +120,7 @@ async function createStripeSubscription({ plan, billing = 'monthly' }) {
   const customer = await stripe.customers.create({
     metadata: { plan, billing, source: 'public_registration' },
   });
-  const subscription = await stripe.subscriptions.create({
+  const subscription = await stripe.subscriptions?.create({
     customer: customer.id,
     items: [{ price: priceId }],
     payment_behavior: 'default_incomplete',
@@ -122,8 +133,19 @@ async function createStripeSubscription({ plan, billing = 'monthly' }) {
   const paymentIntent = subscription.latest_invoice?.payment_intent;
 
   if (!paymentIntent?.client_secret) {
-    const err = new Error('Stripe no devolvió el client secret de la suscripción.');
-    err.status = 500;
+    console.error(
+      '[Stripe] La suscripción no trajo payment_intent.client_secret.',
+      {
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        latestInvoice: subscription.latest_invoice?.id,
+        paymentIntentStatus: paymentIntent?.status,
+      },
+    );
+    const err = new Error(
+      'Stripe no devolvió el client secret. Verifica que el Price ID sea de tipo "recurring" y que la cuenta Stripe esté activa.',
+    );
+    err.statusCode = 500;
     throw err;
   }
 
@@ -138,8 +160,10 @@ async function createStripeSubscription({ plan, billing = 'monthly' }) {
 // PAYPAL CHANGE: valida en servidor la suscripción creada en Stripe.
 async function verifyStripeSubscription(subscriptionId) {
   if (!subscriptionId) {
-    const err = new Error('El identificador de la suscripción Stripe es requerido.');
-    err.status = 400;
+    const err = new Error(
+      'El identificador de la suscripción Stripe es requerido.',
+    );
+    err.statusCode = 400;
     throw err;
   }
 
@@ -157,7 +181,7 @@ async function verifyStripeSubscription(subscriptionId) {
 async function getPaypalAccessToken() {
   if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET) {
     const err = new Error('PayPal no está configurado en el servidor.');
-    err.status = 500;
+    err.statusCode = 500;
     throw err;
   }
 
@@ -177,8 +201,10 @@ async function getPaypalAccessToken() {
   const payload = await response.json();
 
   if (!response.ok || !payload.access_token) {
-    const err = new Error(payload.error_description || 'No se pudo autenticar con PayPal.');
-    err.status = response.status || 500;
+    const err = new Error(
+      payload.error_description || 'No se pudo autenticar con PayPal.',
+    );
+    err.statusCode = response.status || 500;
     throw err;
   }
 
@@ -201,8 +227,10 @@ async function paypalRequest(path, options = {}) {
 
   if (!response.ok) {
     const detail = payload?.details?.[0]?.description || payload?.message;
-    const err = new Error(detail || 'PayPal devolvió un error al procesar la solicitud.');
-    err.status = response.status || 500;
+    const err = new Error(
+      detail || 'PayPal devolvió un error al procesar la solicitud.',
+    );
+    err.statusCode = response.status || 500;
     throw err;
   }
 
@@ -220,12 +248,16 @@ async function getPaypalSubscriptionPlan({ plan, billing = 'monthly' }) {
 // PAYPAL CHANGE: valida la suscripción PayPal aprobada por el cliente.
 async function verifyPaypalSubscription(subscriptionId) {
   if (!subscriptionId) {
-    const err = new Error('El identificador de la suscripción PayPal es requerido.');
-    err.status = 400;
+    const err = new Error(
+      'El identificador de la suscripción PayPal es requerido.',
+    );
+    err.statusCode = 400;
     throw err;
   }
 
-  const payload = await paypalRequest(`/v1/billing/subscriptions/${subscriptionId}`);
+  const payload = await paypalRequest(
+    `/v1/billing/subscriptions/${subscriptionId}`,
+  );
 
   return {
     subscriptionId: payload.id,
@@ -259,10 +291,12 @@ async function registerCompany(data) {
   const { name, legalName, phone, email, address, subdomain, plan } = data;
 
   // 1. Check subdomain uniqueness
-  const existing = await db.Company.findOne({ where: { subdomain: subdomain.toLowerCase() } });
+  const existing = await db.Company.findOne({
+    where: { subdomain: subdomain.toLowerCase() },
+  });
   if (existing) {
     const err = new Error('El subdominio ya está en uso. Elige otro.');
-    err.status = 409;
+    err.statusCode = 409;
     throw err;
   }
 
@@ -271,10 +305,12 @@ async function registerCompany(data) {
   const adminUsername = `admin.${subdomain.toLowerCase()}`;
 
   // Check username uniqueness (very unlikely to collide, but let's be safe)
-  const existingUser = await db.User.findOne({ where: { username: adminUsername } });
+  const existingUser = await db.User.findOne({
+    where: { username: adminUsername },
+  });
   if (existingUser) {
     const err = new Error('Ya existe un administrador con ese subdominio.');
-    err.status = 409;
+    err.statusCode = 409;
     throw err;
   }
 

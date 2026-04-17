@@ -96,27 +96,40 @@ exports.register = catchAsync(async (req, res, next) => {
 });
 
 // PAYPAL CHANGE: Endpoint para crear la suscripción real de Stripe según plan y ciclo.
-exports.createStripeSubscription = catchAsync(async (req, res) => {
+exports.createStripeSubscription = catchAsync(async (req, res, next) => {
   const { plan, billing = 'monthly' } = req.body;
-  const result = await createStripeSubscriptionService({ plan, billing });
-  return res.json(result);
+  try {
+    const result = await createStripeSubscriptionService({ plan, billing });
+    return res.json(result);
+  } catch (err) {
+    // Convierte errores del service (err.statusCode) en AppErrors para el handler global.
+    return next(new AppError(err.message, err.statusCode || 500));
+  }
 });
 
 // PAYPAL CHANGE: Devuelve el Plan ID de PayPal que debe usar el botón oficial.
-exports.getPaypalSubscriptionPlan = catchAsync(async (req, res) => {
+exports.getPaypalSubscriptionPlan = catchAsync(async (req, res, next) => {
   const { plan, billing = 'monthly' } = req.body;
-  const result = await getPaypalSubscriptionPlanService({ plan, billing });
-  return res.json(result);
+  try {
+    const result = await getPaypalSubscriptionPlanService({ plan, billing });
+    return res.json(result);
+  } catch (err) {
+    return next(new AppError(err.message, err.statusCode || 500));
+  }
 });
 
 // PAYPAL CHANGE: Verifica el estado de la suscripción PayPal aprobada en frontend.
-exports.verifyPaypalSubscription = catchAsync(async (req, res) => {
+exports.verifyPaypalSubscription = catchAsync(async (req, res, next) => {
   const { subscriptionId } = req.body;
 
   if (!subscriptionId) {
-    throw new AppError('El identificador de la suscripción PayPal es requerido.', 400);
+    return next(new AppError('El identificador de la suscripción PayPal es requerido.', 400));
   }
 
-  const result = await verifyPaypalSubscriptionService(subscriptionId);
-  return res.json(result);
+  try {
+    const result = await verifyPaypalSubscriptionService(subscriptionId);
+    return res.json(result);
+  } catch (err) {
+    return next(new AppError(err.message, err.statusCode || 500));
+  }
 });
