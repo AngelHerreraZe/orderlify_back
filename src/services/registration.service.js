@@ -116,11 +116,14 @@ async function createStripeSubscription({ plan, billing = 'monthly' }) {
   }
 
   const priceId = getGatewayPlanId('stripe', plan, billing);
+  const keyMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'live' : 'test';
+  console.log(`[Stripe] plan=${plan} billing=${billing} priceId=${priceId} keyMode=${keyMode}`);
+
   const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
   const customer = await stripe.customers.create({
     metadata: { plan, billing, source: 'public_registration' },
   });
-  const subscription = await stripe.subscriptions?.create({
+  const subscription = await stripe.subscriptions.create({
     customer: customer.id,
     items: [{ price: priceId }],
     payment_behavior: 'default_incomplete',
