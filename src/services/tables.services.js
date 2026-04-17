@@ -30,7 +30,8 @@ class tablesServices {
     tenant = {},
     companyName = 'restaurant',
     branchName = 'main',
-    appUrl = process.env.APP_URL ?? 'https://app.orderlify.net',
+    subdomain = null,
+    appUrl = process.env.APP_URL ?? 'https://orderlify.net',
   }) {
     const table = await db.Tables.create({
       tableNumber,
@@ -40,8 +41,13 @@ class tablesServices {
       qrDurationMinutes,
     });
 
-    // Generar QR
-    const menuUrl = `${appUrl}/menu?table=${table.id}`;
+    // Generar QR — URL con subdominio para llegar a la sucursal correcta
+    const baseUrl = subdomain
+      ? appUrl.replace('://', `://${subdomain}.`)
+      : appUrl;
+    const menuUrl = branchId
+      ? `${baseUrl}/menu/${branchId}?table=${table.id}`
+      : `${baseUrl}/menu?table=${table.id}`;
     try {
       const qrBuffer = await qrService.generateQRBuffer(menuUrl);
       const { downloadUrl, storagePath } = await qrService.uploadQRToFirebase(
@@ -104,7 +110,7 @@ class tablesServices {
    * Regenera el QR de una mesa (manual o por expiración).
    * Elimina el QR anterior de Firebase y sube uno nuevo.
    */
-  static async regenerateQR(tableId, { companyName, branchName, appUrl } = {}) {
+  static async regenerateQR(tableId, { companyName, branchName, subdomain, appUrl } = {}) {
     const table = await db.Tables.findByPk(tableId);
     if (!table) {
       const err = new Error('Mesa no encontrada');
@@ -115,7 +121,11 @@ class tablesServices {
     // Eliminar QR anterior
     await qrService.deleteQRFromFirebase(table.qrFirebasePath);
 
-    const menuUrl = `${appUrl ?? process.env.APP_URL ?? 'https://app.orderlify.net'}/menu?table=${tableId}`;
+    const base    = appUrl ?? process.env.APP_URL ?? 'https://orderlify.net';
+    const baseUrl = subdomain ? base.replace('://', `://${subdomain}.`) : base;
+    const menuUrl = table.branchId
+      ? `${baseUrl}/menu/${table.branchId}?table=${tableId}`
+      : `${baseUrl}/menu?table=${tableId}`;
     const qrBuffer = await qrService.generateQRBuffer(menuUrl);
     const { downloadUrl, storagePath } = await qrService.uploadQRToFirebase(
       qrBuffer,

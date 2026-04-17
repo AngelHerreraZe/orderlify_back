@@ -19,9 +19,13 @@ exports.createTable = catchAsync(async (req, res) => {
   let companyName = 'restaurant';
   let branchName  = 'main';
 
+  let subdomain = null;
   if (req.tenant?.companyId) {
     const company = await db.Company.findByPk(req.tenant.companyId, { attributes: ['name', 'subdomain'] });
-    if (company) companyName = company.subdomain ?? company.name;
+    if (company) {
+      companyName = company.subdomain ?? company.name;
+      subdomain   = company.subdomain ?? null;
+    }
   }
   if (branchId) {
     const branch = await db.Branch.findByPk(branchId, { attributes: ['name'] });
@@ -37,6 +41,7 @@ exports.createTable = catchAsync(async (req, res) => {
     tenant: req.tenant ?? {},
     companyName,
     branchName,
+    subdomain,
     appUrl: process.env.APP_URL,
   });
 
@@ -72,9 +77,13 @@ exports.regenerateQR = catchAsync(async (req, res, next) => {
   let companyName = 'restaurant';
   let branchName  = 'main';
 
+  let subdomain = null;
   if (req.tenant?.companyId) {
     const company = await db.Company.findByPk(req.tenant.companyId, { attributes: ['name', 'subdomain'] });
-    if (company) companyName = company.subdomain ?? company.name;
+    if (company) {
+      companyName = company.subdomain ?? company.name;
+      subdomain   = company.subdomain ?? null;
+    }
   }
 
   const table = await db.Tables.findByPk(id);
@@ -88,6 +97,7 @@ exports.regenerateQR = catchAsync(async (req, res, next) => {
   const updated = await tablesServices.regenerateQR(id, {
     companyName,
     branchName,
+    subdomain,
     appUrl: process.env.APP_URL,
   });
 
