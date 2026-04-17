@@ -14,8 +14,8 @@ const PLAN_PRICES = {
 // PAYPAL CHANGE: Configuración de PayPal vía variables de entorno para no hardcodear llaves.
 const PAYPAL_API_BASE =
   process.env.PAYPAL_ENV === 'live'
-    ? 'https://www.paypal.com/sdk/js'
-    : 'https://www.sandbox.paypal.com/sdk/js';
+    ? 'https://api-m.paypal.com'
+    : 'https://api-m.sandbox.paypal.com';
 const PAYPAL_CURRENCY = process.env.PAYPAL_CURRENCY || 'MXN';
 const PAYPAL_BRAND_NAME = process.env.PAYPAL_BRAND_NAME || 'Orderlify';
 // PAYPAL CHANGE: Price IDs y Plan IDs para suscripciones reales mensual/anual.
