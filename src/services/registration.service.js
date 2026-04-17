@@ -134,26 +134,45 @@ async function createStripeSubscription({ plan, billing = 'monthly' }) {
     metadata: { plan, billing, source: 'public_registration' },
   });
 
-  // latest_invoice.payment_intent puede venir como objeto expandido o como string ID
-  // si el expand falló (ej. invoice con amount=0 o configuración de cuenta).
-  let paymentIntent = subscription.latest_invoice?.payment_intent;
+  // Resolve the PaymentIntent — the expand may return an object, a string ID,
+  // or null if the invoice was still in draft state when the response was sent.
+  let paymentIntent = subscription.latest_invoice?.payment_intent ?? null;
 
   if (typeof paymentIntent === 'string') {
-    // Expand falló — recuperamos el PaymentIntent directamente
-    console.log('[Stripe] payment_intent vino como string ID, recuperando objeto…');
     paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
   }
 
+  // Fallback: fetch the invoice directly and retrieve its payment_intent
   if (!paymentIntent?.client_secret) {
-    console.error('[Stripe] Sin client_secret.', {
+    const invoiceId =
+      typeof subscription.latest_invoice === 'string'
+        ? subscription.latest_invoice
+        : subscription.latest_invoice?.id;
+
+    if (invoiceId) {
+      const invoice = await stripe.invoices.retrieve(invoiceId, {
+        expand: ['payment_intent'],
+      });
+      paymentIntent =
+        typeof invoice.payment_intent === 'string'
+          ? await stripe.paymentIntents.retrieve(invoice.payment_intent)
+          : invoice.payment_intent ?? null;
+    }
+  }
+
+  if (!paymentIntent?.client_secret) {
+    console.error('[Stripe] Sin client_secret después de todos los intentos.', {
       subscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
-      latestInvoiceId: subscription.latest_invoice?.id ?? subscription.latest_invoice,
+      latestInvoiceId:
+        typeof subscription.latest_invoice === 'string'
+          ? subscription.latest_invoice
+          : subscription.latest_invoice?.id,
       paymentIntentStatus: paymentIntent?.status ?? 'null',
     });
     const err = new Error(
-      'Stripe no devolvió el client secret. Verifica que el Price ID sea de tipo "recurring", ' +
-      'que la cuenta Stripe esté activa y que el plan no tenga trial_period sin tarjeta.',
+      'Stripe no devolvió el client secret. Verifica que el Price ID sea de tipo "recurring" ' +
+      'y que la cuenta Stripe esté activa.',
     );
     err.statusCode = 500;
     throw err;

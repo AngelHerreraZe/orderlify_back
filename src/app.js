@@ -14,6 +14,10 @@ const swaggerDoc            = require('./swagger.json');
 
 const app = express();
 
+// Trust the first proxy hop (Render, nginx, etc.) so express-rate-limit
+// and req.ip read the real client IP from X-Forwarded-For correctly.
+app.set('trust proxy', 1);
+
 const limiter = rateLimit({
   max: 200,
   windowMs: 60 * 60 * 1000,
