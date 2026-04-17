@@ -127,10 +127,9 @@ async function createStripeSubscription({ plan, billing = 'monthly' }) {
     customer: customer.id,
     items: [{ price: priceId }],
     payment_behavior: 'default_incomplete',
+    collection_method: 'charge_automatically',
     payment_settings: {
       save_default_payment_method: 'on_subscription',
-      // Force card-based PaymentIntent — prevents Stripe from defaulting to
-      // ACH/bank methods on live accounts, which skip PaymentIntent creation.
       payment_method_types: ['card'],
     },
     expand: ['latest_invoice.payment_intent'],
@@ -161,16 +160,18 @@ async function createStripeSubscription({ plan, billing = 'monthly' }) {
         : invoice.payment_intent ?? null;
   }
 
-  // 4. Invoice still in draft — finalize it so Stripe generates the PaymentIntent
+  // 4. Still no PaymentIntent — create one manually linked to the invoice amount.
+  // This happens on live accounts when Stripe chose a non-card collection method.
   if (!paymentIntent?.client_secret && invoiceId) {
-    console.log('[Stripe] Invoice en draft, finalizando para generar PaymentIntent…');
-    const finalized = await stripe.invoices.finalizeInvoice(invoiceId, {
-      expand: ['payment_intent'],
+    console.log('[Stripe] Creando PaymentIntent manualmente para el invoice…');
+    const invoice = await stripe.invoices.retrieve(invoiceId);
+    paymentIntent = await stripe.paymentIntents.create({
+      amount: invoice.amount_due,
+      currency: invoice.currency,
+      customer: customer.id,
+      payment_method_types: ['card'],
+      metadata: { plan, billing, invoiceId, subscriptionId: subscription.id },
     });
-    paymentIntent =
-      typeof finalized.payment_intent === 'string'
-        ? await stripe.paymentIntents.retrieve(finalized.payment_intent)
-        : finalized.payment_intent ?? null;
   }
 
   if (!paymentIntent?.client_secret) {
