@@ -129,50 +129,60 @@ async function createStripeSubscription({ plan, billing = 'monthly' }) {
     payment_behavior: 'default_incomplete',
     payment_settings: {
       save_default_payment_method: 'on_subscription',
+      // Force card-based PaymentIntent — prevents Stripe from defaulting to
+      // ACH/bank methods on live accounts, which skip PaymentIntent creation.
+      payment_method_types: ['card'],
     },
     expand: ['latest_invoice.payment_intent'],
     metadata: { plan, billing, source: 'public_registration' },
   });
 
-  // Resolve the PaymentIntent — the expand may return an object, a string ID,
-  // or null if the invoice was still in draft state when the response was sent.
+  const invoiceId =
+    typeof subscription.latest_invoice === 'string'
+      ? subscription.latest_invoice
+      : subscription.latest_invoice?.id;
+
+  // 1. Try the expanded object first
   let paymentIntent = subscription.latest_invoice?.payment_intent ?? null;
 
+  // 2. Expand returned a string ID — retrieve directly
   if (typeof paymentIntent === 'string') {
     paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
   }
 
-  // Fallback: fetch the invoice directly and retrieve its payment_intent
-  if (!paymentIntent?.client_secret) {
-    const invoiceId =
-      typeof subscription.latest_invoice === 'string'
-        ? subscription.latest_invoice
-        : subscription.latest_invoice?.id;
+  // 3. Still null — re-fetch the invoice with expand
+  if (!paymentIntent?.client_secret && invoiceId) {
+    const invoice = await stripe.invoices.retrieve(invoiceId, {
+      expand: ['payment_intent'],
+    });
+    paymentIntent =
+      typeof invoice.payment_intent === 'string'
+        ? await stripe.paymentIntents.retrieve(invoice.payment_intent)
+        : invoice.payment_intent ?? null;
+  }
 
-    if (invoiceId) {
-      const invoice = await stripe.invoices.retrieve(invoiceId, {
-        expand: ['payment_intent'],
-      });
-      paymentIntent =
-        typeof invoice.payment_intent === 'string'
-          ? await stripe.paymentIntents.retrieve(invoice.payment_intent)
-          : invoice.payment_intent ?? null;
-    }
+  // 4. Invoice still in draft — finalize it so Stripe generates the PaymentIntent
+  if (!paymentIntent?.client_secret && invoiceId) {
+    console.log('[Stripe] Invoice en draft, finalizando para generar PaymentIntent…');
+    const finalized = await stripe.invoices.finalizeInvoice(invoiceId, {
+      expand: ['payment_intent'],
+    });
+    paymentIntent =
+      typeof finalized.payment_intent === 'string'
+        ? await stripe.paymentIntents.retrieve(finalized.payment_intent)
+        : finalized.payment_intent ?? null;
   }
 
   if (!paymentIntent?.client_secret) {
     console.error('[Stripe] Sin client_secret después de todos los intentos.', {
       subscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
-      latestInvoiceId:
-        typeof subscription.latest_invoice === 'string'
-          ? subscription.latest_invoice
-          : subscription.latest_invoice?.id,
+      invoiceId,
       paymentIntentStatus: paymentIntent?.status ?? 'null',
     });
     const err = new Error(
-      'Stripe no devolvió el client secret. Verifica que el Price ID sea de tipo "recurring" ' +
-      'y que la cuenta Stripe esté activa.',
+      'Stripe no pudo generar el formulario de pago. Verifica que los Price IDs sean ' +
+      'de tipo "recurring" y que la cuenta Stripe tenga habilitados los pagos con tarjeta.',
     );
     err.statusCode = 500;
     throw err;
