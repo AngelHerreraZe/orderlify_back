@@ -2,13 +2,47 @@
 const catchAsync     = require('../utils/catchAsync');
 const tablesServices = require('../services/tables.services');
 const { getIO }      = require('../socket');
+const AppError       = require('../utils/appError');
 
 exports.createTable = catchAsync(async (req, res) => {
-  const { tableNumber, capacity } = req.body;
+  const {
+    tableNumber,
+    capacity,
+    autoCommandEnabled = false,
+    qrDurationMinutes  = null,
+  } = req.body;
+
   const branchId = req.tenant?.branchId ?? null;
-  const table = await tablesServices.createTable(tableNumber, capacity, branchId);
+
+  // Resolver nombres para la ruta de Firebase
+  const db = require('../database/models/index');
+  let companyName = 'restaurant';
+  let branchName  = 'main';
+
+  if (req.tenant?.companyId) {
+    const company = await db.Company.findByPk(req.tenant.companyId, { attributes: ['name', 'subdomain'] });
+    if (company) companyName = company.subdomain ?? company.name;
+  }
+  if (branchId) {
+    const branch = await db.Branch.findByPk(branchId, { attributes: ['name'] });
+    if (branch) branchName = branch.name;
+  }
+
+  const table = await tablesServices.createTable({
+    tableNumber,
+    capacity,
+    branchId,
+    autoCommandEnabled: Boolean(autoCommandEnabled),
+    qrDurationMinutes:  qrDurationMinutes ? Number(qrDurationMinutes) : null,
+    tenant: req.tenant ?? {},
+    companyName,
+    branchName,
+    appUrl: process.env.APP_URL,
+  });
+
   getIO()?.emit('table:updated', { action: 'created', table, branchId });
-  return res.status(201).json({ table });
+
+  return res.status(201).json({ status: 'success', table });
 });
 
 exports.getTables = catchAsync(async (req, res) => {
@@ -29,4 +63,35 @@ exports.deleteTable = catchAsync(async (req, res) => {
   await tablesServices.deleteTable(id);
   getIO()?.emit('table:deleted', { id: parseInt(id) });
   return res.sendStatus(204);
+});
+
+exports.regenerateQR = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  const db = require('../database/models/index');
+  let companyName = 'restaurant';
+  let branchName  = 'main';
+
+  if (req.tenant?.companyId) {
+    const company = await db.Company.findByPk(req.tenant.companyId, { attributes: ['name', 'subdomain'] });
+    if (company) companyName = company.subdomain ?? company.name;
+  }
+
+  const table = await db.Tables.findByPk(id);
+  if (!table) return next(new AppError('Mesa no encontrada', 404));
+
+  if (table.branchId) {
+    const branch = await db.Branch.findByPk(table.branchId, { attributes: ['name'] });
+    if (branch) branchName = branch.name;
+  }
+
+  const updated = await tablesServices.regenerateQR(id, {
+    companyName,
+    branchName,
+    appUrl: process.env.APP_URL,
+  });
+
+  getIO()?.emit('table:qr_updated', { tableId: parseInt(id), qrUrl: updated.qrUrl, qrExpiresAt: updated.qrExpiresAt });
+
+  return res.json({ status: 'success', table: updated });
 });

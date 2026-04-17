@@ -31,6 +31,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       paidAt: {
         type: DataTypes.DATE,
+        field: 'paid_at',
         allowNull: false,
       },
       receivedAmount: {

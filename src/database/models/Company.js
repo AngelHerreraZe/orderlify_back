@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       Company.hasMany(models.Products,   { foreignKey: 'companyId' });
       Company.hasMany(models.Categories, { foreignKey: 'companyId' });
       Company.hasMany(models.Orders,     { foreignKey: 'companyId' });
-      Company.hasMany(models.Payments,   { foreignKey: 'companyId' });
+      // Payments no longer store company_id directly (removed in 3NF normalization migration 20260413000002)
     }
   }
 

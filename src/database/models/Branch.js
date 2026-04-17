@@ -8,7 +8,8 @@ module.exports = (sequelize, DataTypes) => {
       Branch.hasMany(models.Station,         { foreignKey: 'branchId',  as: 'stations' });
       Branch.hasMany(models.Tables,          { foreignKey: 'branchId' });
       Branch.hasMany(models.Orders,          { foreignKey: 'branchId' });
-      Branch.hasMany(models.Payments,        { foreignKey: 'branchId' });
+      // Payments no longer store branch_id directly (removed in 3NF normalization migration 20260413000002)
+      // Tenant filtering on payments is done via the Orders association (order_id → orders.branch_id)
       Branch.hasMany(models.UsersBranches,   { foreignKey: 'branchId', as: 'userBranchLinks' });
       Branch.hasMany(models.BranchProducts,  { foreignKey: 'branchId', as: 'branchProductLinks' });
       Branch.belongsToMany(models.User, {
@@ -55,6 +56,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
         allowNull: false,
+      },
+      menuStyle: {
+        type: DataTypes.ENUM('A', 'B', 'C', 'D', 'E'),
+        field: 'menu_style',
+        allowNull: false,
+        defaultValue: 'A',
       },
     },
     {

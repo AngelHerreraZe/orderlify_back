@@ -54,7 +54,7 @@ class CorporateService {
         branchId: { [Op.in]: branchIds },
         createdAt: { [Op.between]: [start, end] },
       },
-      attributes: ['id', 'branchId', 'totalAmount', 'createdAt'],
+      attributes: ['id', 'branchId', 'total', 'createdAt'],
       raw: true,
     })
 
@@ -74,7 +74,7 @@ class CorporateService {
     let totalOrders = 0
 
     orders.forEach(order => {
-      const amount = parseFloat(order.totalAmount) || 0
+      const amount = parseFloat(order.total) || 0
       branchMetrics[order.branchId].revenue += amount
       branchMetrics[order.branchId].orders += 1
       totalRevenue += amount
@@ -123,7 +123,7 @@ class CorporateService {
     orders.forEach(order => {
       const dateStr = order.createdAt.toISOString().split('T')[0]
       if (dateStr in dailyMap) {
-        dailyMap[dateStr] += parseFloat(order.totalAmount) || 0
+        dailyMap[dateStr] += parseFloat(order.total) || 0
       }
     })
 

@@ -190,6 +190,51 @@ exports.changePassword = catchAsync(async (req, res, next) => {
   return res.json({ token });
 });
 
+/**
+ * PUT /users/:id/password
+ * Usuario cambia su propia contraseña. Se rechaza si :id ≠ token.id.
+ */
+exports.changePasswordById = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+
+  // Protección de identidad: sólo el propio usuario puede cambiar su contraseña
+  if (String(req.user.id) !== String(id)) {
+    return next(new AppError('No puedes cambiar la contraseña de otro usuario', 403));
+  }
+
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return next(new AppError('Se requieren contraseña actual y nueva', 400));
+  }
+
+  if (typeof newPassword !== 'string' || newPassword.length < 8) {
+    return next(new AppError('La nueva contraseña debe tener al menos 8 caracteres', 400));
+  }
+
+  if (currentPassword === newPassword) {
+    return next(new AppError('La nueva contraseña debe ser diferente a la actual', 400));
+  }
+
+  const updatedUser = await userServices.changePassword(id, currentPassword, newPassword);
+
+  const role = updatedUser.UsersRoles?.[0]?.Role?.name;
+  const AuthServices = require('../services/auth.services');
+  const token = AuthServices.genToken({
+    id: updatedUser.id,
+    username: updatedUser.username,
+    companyId: updatedUser.companyId,
+    role,
+    passwordChanged: updatedUser.passwordChanged,
+  });
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Contraseña actualizada correctamente',
+    token,
+  });
+});
+
 exports.getMe = catchAsync(async (req, res, next) => {
   const { id } = req.user;
   const user = await userServices.getUserInfoById(id);

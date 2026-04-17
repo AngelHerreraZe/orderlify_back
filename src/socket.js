@@ -172,6 +172,62 @@ const initSocket = (server) => {
       if (branchId) socket.join(`branch:${branchId}`);
     });
 
+    // ── Chat unificado (landing ↔ panel admin) ─────────────────────────────
+    // Visitante envía mensaje desde la landing
+    socket.on('chat:visitor_joined', async ({ visitorId, visitorName, visitorEmail }) => {
+      try {
+        const ChatService = require('./services/chat.service');
+        const chat = await ChatService.getOrCreateChat({
+          visitorId,
+          visitorName,
+          visitorEmail,
+          companyId: company?.id ?? null,
+        });
+        socket.data.chatId = chat.id;
+        socket.join(`chat:${chat.id}`);
+        // Notificar a todos los admins conectados
+        io.emit('chat:new_visitor', {
+          chatId:      chat.id,
+          visitorId,
+          visitorName,
+          visitorEmail,
+        });
+      } catch (err) {
+        console.error('[Socket] chat:visitor_joined error:', err.message);
+      }
+    });
+
+    socket.on('chat:visitor_message', async ({ visitorId, visitorName, body }) => {
+      if (!body?.trim()) return;
+      try {
+        const ChatService = require('./services/chat.service');
+        const chat = await ChatService.getOrCreateChat({ visitorId, visitorName });
+        const msg = await ChatService.saveMessage({
+          chatId:     chat.id,
+          senderType: 'visitor',
+          senderName: visitorName ?? visitorId,
+          body:        body.trim(),
+        });
+        // Reenviar al room del chat (admins en panel)
+        io.emit('chat:visitor_message_saved', {
+          chatId:  chat.id,
+          message: msg.toJSON(),
+        });
+      } catch (err) {
+        console.error('[Socket] chat:visitor_message error:', err.message);
+      }
+    });
+
+    // Admin escribe — indicador de typing para el visitante
+    socket.on('chat:admin_typing', ({ chatId }) => {
+      io.to(`chat:${chatId}`).emit('chat:admin_typing', { chatId });
+    });
+
+    // Visitante escribe — indicador de typing para el admin
+    socket.on('chat:visitor_typing', ({ visitorId }) => {
+      io.emit('chat:visitor_typing', { visitorId });
+    });
+
     socket.on('disconnect', () => {
       if (process.env.NODE_ENV === 'development') {
         console.log(`[Socket] Desconectado: ${socket.id}`);

@@ -28,6 +28,14 @@ router
     ordersController.deleteOrder
   );
 
+// Actualización de estado por comando de voz (solo Chef)
+router.patch(
+  '/orders/:id/voice-status',
+  authenticate,
+  allowRoles('Chef'),
+  ordersController.voiceUpdateStatus,
+);
+
 router.post('/orders/:orderId/items', ordersController.addItemsToOrder);
 
 router

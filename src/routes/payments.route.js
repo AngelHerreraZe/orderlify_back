@@ -7,9 +7,9 @@ const router = Router();
 
 router
   .route('/payments')
-  .post(paymentsController.registerPayment)
-  .get(paymentsController.getAllPayments);
+  .post(authenticate, allowRoles('Admin', 'Manager', 'Cashier'), paymentsController.registerPayment)
+  .get(authenticate, allowRoles('Admin', 'Manager', 'Cashier'), paymentsController.getAllPayments);
 
-router.get('/payments/:id', paymentsController.getOnePayment);
+router.get('/payments/:id', authenticate, allowRoles('Admin', 'Manager', 'Cashier'), paymentsController.getOnePayment);
 
 module.exports = router;

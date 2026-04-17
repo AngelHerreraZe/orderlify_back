@@ -39,10 +39,19 @@ router
     userController.deleteUser,
   );
 
+// POST legacy (force-password-change flow)
 router.post(
   '/auth/change-password',
   authenticate,
   userController.changePassword,
+);
+
+// PUT /users/:id/password — usuario cambia su propia contraseña
+// El middleware valida que req.user.id === req.params.id
+router.put(
+  '/users/:id/password',
+  authenticate,
+  userController.changePasswordById,
 );
 
 router.get('/me', authenticate, userController.getMe);

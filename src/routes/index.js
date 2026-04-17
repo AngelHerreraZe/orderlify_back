@@ -1,4 +1,5 @@
 'use strict';
+const chatRoutes          = require('./chat.routes');
 const userRoutes          = require('./users.routes');
 const rolesRoutes         = require('./roles.routes');
 const productsRoutes      = require('./products.routes');
@@ -12,6 +13,7 @@ const stationsRoutes      = require('./stations.routes');
 const cashRegisterRoutes  = require('./cashRegister.routes');
 const usersSyncRoutes     = require('./usersSync.routes');
 const registrationRoutes  = require('./registration.routes');
+const publicMenuRoutes    = require('./publicMenu.routes');
 
 const ApiRoutes = (app) => {
   app.use('/api/v1/', registrationRoutes);
@@ -27,6 +29,8 @@ const ApiRoutes = (app) => {
   app.use('/api/v1/', stationsRoutes);
   app.use('/api/v1/', cashRegisterRoutes);
   app.use('/api/v1/', usersSyncRoutes);
+  app.use('/api/v1/', chatRoutes);
+  app.use('/api/v1/', publicMenuRoutes);
 };
 
 module.exports = ApiRoutes;

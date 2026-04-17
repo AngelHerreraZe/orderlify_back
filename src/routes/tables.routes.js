@@ -14,13 +14,21 @@ router
   )
   .get(
     authenticate,
-    allowRoles('Waiter', 'Manager', 'Admin'),
+    allowRoles('Waiter', 'Manager', 'Admin', 'Cashier'),
     tablesController.getTables
   );
 
 router
   .route('/tables/:id')
-  .put(tablesController.updateTable)
-  .delete(tablesController.deleteTable);
+  .put(authenticate, allowRoles('Admin', 'Manager'), tablesController.updateTable)
+  .delete(authenticate, allowRoles('Admin', 'Manager'), tablesController.deleteTable);
+
+// Regenerar QR manualmente
+router.post(
+  '/tables/:id/regenerate-qr',
+  authenticate,
+  allowRoles('Admin', 'Manager'),
+  tablesController.regenerateQR,
+);
 
 module.exports = router;
