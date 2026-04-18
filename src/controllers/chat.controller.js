@@ -4,10 +4,10 @@ const AppError    = require('../utils/appError');
 const ChatService = require('../services/chat.service');
 const { getIO }   = require('../socket');
 
-/** GET /chats — lista chats activos (admin) */
+/** GET /chats — lista chats activos filtrados por tipo y/o estado */
 exports.listChats = catchAsync(async (req, res) => {
-  const { status } = req.query;
-  const chats = await ChatService.listChats({ status });
+  const { status, chatType } = req.query;
+  const chats = await ChatService.listChats({ status, chatType });
   return res.json({ status: 'success', chats });
 });
 

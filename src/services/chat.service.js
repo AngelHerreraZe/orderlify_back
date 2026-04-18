@@ -3,7 +3,7 @@ const db = require('../database/models/index');
 
 class ChatService {
   /** Obtiene o crea una conversación para un visitante */
-  static async getOrCreateChat({ visitorId, visitorName, visitorEmail, companyId }) {
+  static async getOrCreateChat({ visitorId, visitorName, visitorEmail, companyId, chatType = 'customer_service' }) {
     let chat = await db.Chat.findOne({ where: { visitorId, status: 'open' } });
     if (!chat) {
       chat = await db.Chat.create({
@@ -11,6 +11,7 @@ class ChatService {
         visitorName,
         visitorEmail,
         companyId: companyId ?? null,
+        chatType,
         status: 'open',
       });
     }
@@ -23,9 +24,10 @@ class ChatService {
   }
 
   /** Lista todos los chats activos para el panel admin */
-  static async listChats({ status } = {}) {
+  static async listChats({ status, chatType } = {}) {
     const where = {};
-    if (status) where.status = status;
+    if (status)   where.status   = status;
+    if (chatType) where.chatType = chatType;
     return db.Chat.findAll({
       where,
       include: [

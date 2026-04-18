@@ -16,7 +16,10 @@ const tenantWhere = ({ companyId, branchId } = {}) => {
 const ORDER_INCLUDE = [
   {
     model: db.OrdersItems,
-    include: [{ model: db.Products }],
+    include: [{
+      model: db.Products,
+      include: [{ model: db.Categories }],
+    }],
   },
   { model: db.User,   as: 'user',  attributes: { exclude: ['password', 'active', 'createdAt', 'updatedAt'] } },
   { model: db.Tables, as: 'table', attributes: ['id', 'tableNumber', 'capacity'] },
@@ -78,6 +81,32 @@ class ordersServices {
   static async deleteOrderItem(orderId, productId) {
     await db.OrdersItems.destroy({
       where: { [Op.and]: [{ orderId, productId }] },
+    });
+  }
+
+  /** Actualiza itemStatus de un ítem específico */
+  static async updateItemStatus(orderId, itemId, itemStatus) {
+    await db.OrdersItems.update(
+      { itemStatus },
+      { where: { id: itemId, orderId } },
+    );
+  }
+
+  /**
+   * Busca una orden activa (Pendiente o Preparando) para una mesa dentro del tenant.
+   * Retorna null si no existe.
+   */
+  static async findActiveOrderForTable(tableId, tenant = {}) {
+    const where = {
+      tableId,
+      status: { [Op.in]: ['Pendiente', 'Preparando'] },
+    };
+    if (tenant.companyId) where.companyId = tenant.companyId;
+    if (tenant.branchId)  where.branchId  = tenant.branchId;
+
+    return db.Orders.findOne({
+      where,
+      include: ORDER_INCLUDE,
     });
   }
 }

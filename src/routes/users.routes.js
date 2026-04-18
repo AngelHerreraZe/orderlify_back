@@ -15,6 +15,9 @@ router.get(
 
 router.post('/auth/login', userController.userLogin);
 
+// Verificación de dispositivo: empresa + correo + serial antes del login
+router.post('/auth/device', userController.deviceAuth);
+
 // Solo Admin puede crear usuarios (incl. Managers).
 // El controller verifica además que Manager no pueda asignar rol Admin/Manager.
 router.post(

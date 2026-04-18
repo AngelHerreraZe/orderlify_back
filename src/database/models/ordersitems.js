@@ -40,6 +40,12 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: null,
       },
+      itemStatus: {
+        type: DataTypes.ENUM('Pendiente', 'Preparando', 'Listo'),
+        field: 'item_status',
+        allowNull: false,
+        defaultValue: 'Pendiente',
+      },
     },
     {
       sequelize,

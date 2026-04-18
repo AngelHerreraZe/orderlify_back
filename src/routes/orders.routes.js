@@ -38,6 +38,14 @@ router.patch(
 
 router.post('/orders/:orderId/items', ordersController.addItemsToOrder);
 
+// Actualización de status de ítem individual (Chef libera por categoría)
+router.patch(
+  '/orders/:orderId/items/:itemId/status',
+  authenticate,
+  allowRoles('Chef', 'Manager'),
+  ordersController.updateItemStatus,
+);
+
 router
   .route('/orders/:orderId/items/:productId')
   .put(ordersController.editOrderItems)

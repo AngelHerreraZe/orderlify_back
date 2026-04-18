@@ -235,6 +235,56 @@ exports.changePasswordById = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.deviceAuth = catchAsync(async (req, res, next) => {
+  const { empresa, correo, serial } = req.body;
+
+  if (!empresa || !correo || !serial) {
+    return next(new AppError('Se requieren empresa, correo y serial', 400));
+  }
+
+  const db = require('../database/models/index');
+  const { Op } = require('sequelize');
+
+  const company = await db.Company.findOne({
+    where: {
+      [Op.or]: [{ subdomain: empresa.trim().toLowerCase() }, { name: empresa.trim() }],
+      email: correo.trim().toLowerCase(),
+      serial: serial.trim(),
+    },
+    attributes: ['id', 'name', 'subdomain', 'status', 'serial', 'plan'],
+  });
+
+  if (!company) {
+    return next(new AppError('Datos de empresa incorrectos', 401));
+  }
+
+  if (company.status !== 'active') {
+    return next(new AppError('Empresa suspendida. Contacte a soporte.', 403));
+  }
+
+  if (!company.serial) {
+    return next(new AppError('Esta empresa no tiene un serial asignado', 403));
+  }
+
+  const deviceToken = AuthServices.genToken({
+    deviceVerified: true,
+    companyId: company.id,
+    subdomain: company.subdomain,
+  });
+
+  return res.json({
+    status: 'success',
+    message: 'Empresa verificada. Puede continuar al login.',
+    deviceToken,
+    company: {
+      id: company.id,
+      name: company.name,
+      subdomain: company.subdomain,
+      plan: company.plan,
+    },
+  });
+});
+
 exports.getMe = catchAsync(async (req, res, next) => {
   const { id } = req.user;
   const user = await userServices.getUserInfoById(id);

@@ -155,11 +155,11 @@ const initSocket = (server) => {
       console.log(`[Socket] Conectado: ${socket.id} | tenant: ${company?.subdomain ?? 'none'} | user: ${user?.username ?? 'anon'}`);
     }
 
-    // Unirse al room del tenant automáticamente — todos los eventos
-    // emitidos con getIO().to(`tenant:${companyId}`) llegan solo a
-    // los sockets de esa empresa.
-    if (company?.id) {
-      socket.join(`tenant:${company.id}`);
+    // Unirse al room del tenant por subdominio (producción) o por companyId del JWT (desarrollo/fallback).
+    // Ambos caminos desembocan en el mismo room tenant:{id}.
+    const tenantId = company?.id ?? user?.companyId ?? null;
+    if (tenantId) {
+      socket.join(`tenant:${tenantId}`);
     }
 
     // Join role-based room (e.g. 'Admin', 'Mesero')
@@ -172,9 +172,16 @@ const initSocket = (server) => {
       if (branchId) socket.join(`branch:${branchId}`);
     });
 
+    // Join chat-type room — panel agents subscribe to their queue
+    // 'join:chat_role' with value 'customer_service' or 'technical_support'
+    socket.on('join:chat_role', (chatRole) => {
+      const valid = ['customer_service', 'technical_support'];
+      if (valid.includes(chatRole)) socket.join(`chat_role:${chatRole}`);
+    });
+
     // ── Chat unificado (landing ↔ panel admin) ─────────────────────────────
-    // Visitante envía mensaje desde la landing
-    socket.on('chat:visitor_joined', async ({ visitorId, visitorName, visitorEmail }) => {
+    // chatType: 'customer_service' (landing) | 'technical_support' (/app)
+    socket.on('chat:visitor_joined', async ({ visitorId, visitorName, visitorEmail, chatType = 'customer_service' }) => {
       try {
         const ChatService = require('./services/chat.service');
         const chat = await ChatService.getOrCreateChat({
@@ -182,12 +189,14 @@ const initSocket = (server) => {
           visitorName,
           visitorEmail,
           companyId: company?.id ?? null,
+          chatType,
         });
         socket.data.chatId = chat.id;
         socket.join(`chat:${chat.id}`);
-        // Notificar a todos los admins conectados
-        io.emit('chat:new_visitor', {
+        // Notificar solo a los agentes del tipo correspondiente
+        io.to(`chat_role:${chatType}`).emit('chat:new_visitor', {
           chatId:      chat.id,
+          chatType,
           visitorId,
           visitorName,
           visitorEmail,
@@ -197,19 +206,19 @@ const initSocket = (server) => {
       }
     });
 
-    socket.on('chat:visitor_message', async ({ visitorId, visitorName, body }) => {
+    socket.on('chat:visitor_message', async ({ visitorId, visitorName, body, chatType = 'customer_service' }) => {
       if (!body?.trim()) return;
       try {
         const ChatService = require('./services/chat.service');
-        const chat = await ChatService.getOrCreateChat({ visitorId, visitorName });
+        const chat = await ChatService.getOrCreateChat({ visitorId, visitorName, chatType });
         const msg = await ChatService.saveMessage({
           chatId:     chat.id,
           senderType: 'visitor',
           senderName: visitorName ?? visitorId,
           body:        body.trim(),
         });
-        // Reenviar al room del chat (admins en panel)
-        io.emit('chat:visitor_message_saved', {
+        // Reenviar solo a los agentes del tipo correspondiente
+        io.to(`chat_role:${chat.chatType}`).emit('chat:visitor_message_saved', {
           chatId:  chat.id,
           message: msg.toJSON(),
         });

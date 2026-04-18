@@ -38,6 +38,12 @@ module.exports = {
         references: { model: 'companies', key: 'id' },
         onDelete: 'SET NULL',
       },
+      chat_type: {
+        type: Sequelize.ENUM('customer_service', 'technical_support'),
+        allowNull: false,
+        defaultValue: 'customer_service',
+        comment: 'customer_service = landing page · technical_support = /app',
+      },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,

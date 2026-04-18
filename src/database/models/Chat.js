@@ -47,6 +47,12 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         field: 'company_id',
       },
+      chatType: {
+        type: DataTypes.ENUM('customer_service', 'technical_support'),
+        allowNull: false,
+        defaultValue: 'customer_service',
+        field: 'chat_type',
+      },
     },
     {
       sequelize,
