@@ -236,18 +236,17 @@ exports.changePasswordById = catchAsync(async (req, res, next) => {
 });
 
 exports.deviceAuth = catchAsync(async (req, res, next) => {
-  const { empresa, correo, serial } = req.body;
+  const { subdominio, correo, serial } = req.body;
 
-  if (!empresa || !correo || !serial) {
-    return next(new AppError('Se requieren empresa, correo y serial', 400));
+  if (!subdominio || !correo || !serial) {
+    return next(new AppError('Se requieren subdominio, correo y serial', 400));
   }
 
   const db = require('../database/models/index');
-  const { Op } = require('sequelize');
 
   const company = await db.Company.findOne({
     where: {
-      [Op.or]: [{ subdomain: empresa.trim().toLowerCase() }, { name: empresa.trim() }],
+      subdomain: subdominio.trim().toLowerCase(),
       email: correo.trim().toLowerCase(),
       serial: serial.trim(),
     },
